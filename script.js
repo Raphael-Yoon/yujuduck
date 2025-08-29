@@ -10,6 +10,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const prizeChuteX = 50;
     const prizeChuteWidth = 80;
 
+    const tauntMessages = [
+        '까비!',
+        '거의 다 잡았는데!',
+        '에이~',
+        '다음에 다시 도전!',
+        '인형이 도망갔어요!',
+        '미끄러졌네요!'
+    ];
+
+    const celebrationMessages = [
+        '와! ${dollName} 획득!',
+        '대단해요! ${dollName}을(를) 잡았어요!',
+        '컬렉션에 ${dollName} 추가!',
+        '나이스 캐치! ${dollName}!'
+    ];
+
     // 인형 데이터
     const dollData = [
         { id: 1, name: '인형 1호', rarity: 'Common', src: 'images/doll_01.png', type: 'normal' },
@@ -92,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = dollData[Math.floor(Math.random() * dollData.length)];
             dolls.push({
                 x: Math.random() * (canvas.width - 150) + 100, // 바닥에 무작위로
-                y: canvas.height - (Math.random() * 150 + 50),
+                y: canvas.height - (Math.random() * 100 + 40),
                 width: 60,
                 height: 60,
                 isGrabbed: false,
@@ -166,22 +182,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 claw.isClosed = true;
                 gameState = 'RAISING';
+
+                // 흔들림 이벤트 발동 (25% 확률)
+                if (claw.grabbedDoll && Math.random() < 0.25) {
+                    claw.isShaking = true;
+                    resultDisplay.textContent = '집게가 심하게 흔들립니다!';
+                }
             }
         } else if (gameState === 'RAISING') {
             claw.y -= claw.speed;
             if (claw.grabbedDoll) {
-                // 확률적으로 인형 놓치기 (0.7% 확률)
-                if (Math.random() < 0.007) {
-                    resultDisplay.textContent = '앗! 인형을 놓쳤습니다!';
+                // 흔들릴 때 놓칠 확률 증가 (2.5%), 평소에는 (0.7%)
+                const dropChance = claw.isShaking ? 0.025 : 0.007;
+                if (Math.random() < dropChance) {
+                    resultDisplay.textContent = tauntMessages[Math.floor(Math.random() * tauntMessages.length)];
                     claw.grabbedDoll.isGrabbed = false;
                     claw.grabbedDoll.isFalling = true;
                     claw.grabbedDoll = null;
+                    claw.isShaking = false; // 흔들림 멈춤
                 } else {
                     claw.grabbedDoll.x = claw.x;
                     claw.grabbedDoll.y = claw.y + claw.height;
                 }
             }
             if (claw.y <= 50) {
+                claw.isShaking = false; // 올라가면 흔들림 멈춤
                 gameState = 'RETURNING';
             }
         } else if (gameState === 'RETURNING') {
@@ -221,7 +246,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             break;
                         default: // normal
-                            resultDisplay.textContent = `축하합니다! ${claw.grabbedDoll.name} 획득!`
+                            const messageTemplate = celebrationMessages[Math.floor(Math.random() * celebrationMessages.length)];
+                            resultDisplay.textContent = messageTemplate.replace('${dollName}', claw.grabbedDoll.name);
                             if (!collectedDolls.has(claw.grabbedDoll.id)) {
                                 collectedDolls.add(claw.grabbedDoll.id);
                                 updateCollectionDisplay();
@@ -279,21 +305,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawClaw() {
+        let drawX = claw.x;
+        if (claw.isShaking) {
+            drawX += (Math.random() - 0.5) * 10; // 좌우로 5px 범위 내에서 흔들림
+        }
+
         ctx.fillStyle = '#555';
         // 집게 라인
-        ctx.fillRect(claw.x + claw.width / 2 - 2, 0, 4, claw.y);
+        ctx.fillRect(drawX + claw.width / 2 - 2, 0, 4, claw.y);
         // 집게 본체
-        ctx.fillRect(claw.x, claw.y, claw.width, claw.height);
+        ctx.fillRect(drawX, claw.y, claw.width, claw.height);
         // 집게 팔
         ctx.beginPath();
-        ctx.moveTo(claw.x, claw.y + claw.height);
+        ctx.moveTo(drawX, claw.y + claw.height);
         if (claw.isClosed) {
-            ctx.lineTo(claw.x + claw.width / 2, claw.y + claw.height + 20);
-            ctx.lineTo(claw.x + claw.width, claw.y + claw.height);
+            ctx.lineTo(drawX + claw.width / 2, claw.y + claw.height + 20);
+            ctx.lineTo(drawX + claw.width, claw.y + claw.height);
         } else {
-            ctx.lineTo(claw.x - 10, claw.y + claw.height + 20);
-            ctx.moveTo(claw.x + claw.width, claw.y + claw.height);
-            ctx.lineTo(claw.x + claw.width + 10, claw.y + claw.height + 20);
+            ctx.lineTo(drawX - 10, claw.y + claw.height + 20);
+            ctx.moveTo(drawX + claw.width, claw.y + claw.height);
+            ctx.lineTo(drawX + claw.width + 10, claw.y + claw.height + 20);
         }
         ctx.strokeStyle = '#555';
         ctx.lineWidth = 5;
