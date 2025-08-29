@@ -72,12 +72,13 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 10px;
-    margin: 20px 0;
+    margin: 20px auto;
     padding: 20px;
     border: 2px solid #ccc;
     background-color: #fff;
-    width: 80%;
-    max-width: 700px;
+    width: 100%;
+    box-sizing: border-box; /* 패딩과 테두리를 너비에 포함 */
+    justify-content: center; /* 그리드 아이템 중앙 정렬 */
 }
 
 .collection-item {
