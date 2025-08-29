@@ -62,6 +62,36 @@ body {
     background-color: #e04050;
 }
 
+#button-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.arrow-button {
+    padding: 10px 15px;
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    background-color: #2196F3;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+}
+
+.arrow-button:hover {
+    background-color: #1976D2;
+}
+
+.arrow-button:active {
+    background-color: #1565C0;
+    transform: scale(0.95);
+}
+
 #result-display {
     margin-top: 10px;
     font-size: 16px;

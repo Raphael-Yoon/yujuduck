@@ -105,6 +105,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function addEventListeners() {
         document.addEventListener('keydown', handleKeyDown);
         document.getElementById('drop-button').addEventListener('click', startPlay);
+        
+        // 화살표 버튼 이벤트
+        document.getElementById('left-arrow').addEventListener('click', moveClawLeft);
+        document.getElementById('right-arrow').addEventListener('click', moveClawRight);
+        
+        // 터치 이벤트도 추가
+        document.getElementById('left-arrow').addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            moveClawLeft();
+        });
+        document.getElementById('right-arrow').addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            moveClawRight();
+        });
 
         // 마우스 이벤트
         canvas.addEventListener('mousedown', handleDragStart);
@@ -119,6 +133,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let isDragging = false;
+    
+    // 화살표 버튼으로 집게 이동
+    function moveClawLeft() {
+        if (gameState !== 'READY') return;
+        claw.x = Math.max(0, claw.x - 20);
+    }
+    
+    function moveClawRight() {
+        if (gameState !== 'READY') return;
+        claw.x = Math.min(canvas.width - claw.width, claw.x + 20);
+    }
 
     function handleDragStart(e) {
         if (gameState !== 'READY') return;
