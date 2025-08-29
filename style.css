@@ -35,6 +35,22 @@ body {
     color: #555;
 }
 
+#drop-button {
+    margin-top: 10px;
+    padding: 10px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    background-color: #ff4757;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#drop-button:hover {
+    background-color: #e04050;
+}
+
 #result-display {
     margin-top: 10px;
     font-size: 16px;

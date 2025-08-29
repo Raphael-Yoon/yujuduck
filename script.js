@@ -96,9 +96,64 @@ document.addEventListener('DOMContentLoaded', () => {
     function init() {
         createDolls();
         updateCollectionDisplay();
-        document.addEventListener('keydown', handleKeyDown);
+        addEventListeners();
         gameState = 'READY';
         gameLoop();
+    }
+
+    // 이벤트 리스너 추가
+    function addEventListeners() {
+        document.addEventListener('keydown', handleKeyDown);
+        document.getElementById('drop-button').addEventListener('click', startPlay);
+
+        // 마우스 이벤트
+        canvas.addEventListener('mousedown', handleDragStart);
+        canvas.addEventListener('mousemove', handleDragging);
+        canvas.addEventListener('mouseup', handleDragEnd);
+        canvas.addEventListener('mouseleave', handleDragEnd);
+
+        // 터치 이벤트
+        canvas.addEventListener('touchstart', handleDragStart);
+        canvas.addEventListener('touchmove', handleDragging);
+        canvas.addEventListener('touchend', handleDragEnd);
+    }
+
+    let isDragging = false;
+
+    function handleDragStart(e) {
+        if (gameState !== 'READY') return;
+        const pos = getMousePos(e);
+        // 집게를 잡았는지 확인
+        if (pos.x >= claw.x && pos.x <= claw.x + claw.width &&
+            pos.y >= claw.y && pos.y <= claw.y + claw.height) {
+            isDragging = true;
+        }
+    }
+
+    function handleDragging(e) {
+        if (!isDragging || gameState !== 'READY') return;
+        const pos = getMousePos(e);
+        claw.x = Math.max(0, Math.min(canvas.width - claw.width, pos.x - claw.width / 2));
+    }
+
+    function handleDragEnd(e) {
+        isDragging = false;
+    }
+
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        // 터치 이벤트 처리
+        if (e.touches && e.touches.length > 0) {
+            return {
+                x: e.touches[0].clientX - rect.left,
+                y: e.touches[0].clientY - rect.top
+            };
+        }
+        // 마우스 이벤트 처리
+        return {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        };
     }
 
     // 인형 생성 및 배치
