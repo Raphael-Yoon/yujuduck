@@ -11,12 +11,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const prizeChuteWidth = 80;
 
     const tauntMessages = [
-        '까비!',
-        '거의 다 잡았는데!',
-        '에이~',
-        '다음에 다시 도전!',
-        '인형이 도망갔어요!',
-        '미끄러졌네요!'
+        '바보! 인형이 도망갔잖아!',
+        '에휴, 그것도 못 잡니?',
+        '다음 생에 잡으렴!',
+        '코인만 날렸네!',
+        '엄마한테 일러바칠 거야!',
+        '넌 인형 뽑기 소질 없어!',
+        '다음에 또 도전해봐! (과연 잡을 수 있을까?)',
+        '실력이 부족하네!',
+        '야 이 똥멍청이야!!'
     ];
 
     const celebrationMessages = [
@@ -345,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 // 잡은 인형이 없으면 바로 리셋
-                resultDisplay.textContent = '이런, 놓쳤습니다!';
+                resultDisplay.textContent = tauntMessages[Math.floor(Math.random() * tauntMessages.length)];
                 resetClaw();
             }
         }
