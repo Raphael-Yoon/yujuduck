@@ -1,0 +1,73 @@
+body {
+    font-family: sans-serif;
+    text-align: center;
+    background-color: #f0f0f0;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#title-image {
+    width: 510px;
+    height: auto;
+    margin-top: 20px;
+}
+
+#game-wrapper {
+    margin: 20px 0;
+    padding: 20px;
+    border: 2px solid #ccc;
+    background-color: #fff;
+}
+
+#game-canvas {
+    border: 5px solid #88aaff;
+    background-color: #e0e8ff;
+}
+
+#controls {
+    margin-top: 10px;
+}
+
+.instructions {
+    font-size: 14px;
+    color: #555;
+}
+
+#result-display {
+    margin-top: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    min-height: 20px;
+}
+
+#collection-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    margin: 20px 0;
+    padding: 20px;
+    border: 2px solid #ccc;
+    background-color: #fff;
+    width: 80%;
+    max-width: 700px;
+}
+
+.collection-item {
+    border: 1px solid #ddd;
+    padding: 5px;
+    background-color: #fafafa;
+    text-align: center;
+}
+
+.collection-item img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain; /* 이미지가 비율에 맞게 조정되도록 */
+}
+
+.collection-item p {
+    margin: 5px 0 0;
+    font-size: 12px;
+}
