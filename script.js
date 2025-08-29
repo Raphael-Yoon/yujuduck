@@ -122,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDragStart(e) {
         if (gameState !== 'READY') return;
+        if (e.touches) e.preventDefault(); // 터치 이벤트 기본 동작 방지
         const pos = getMousePos(e);
         // 집게를 잡았는지 확인
         if (pos.x >= claw.x && pos.x <= claw.x + claw.width &&
@@ -132,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDragging(e) {
         if (!isDragging || gameState !== 'READY') return;
+        if (e.touches) e.preventDefault(); // 터치 이벤트 기본 동작 방지
         const pos = getMousePos(e);
         claw.x = Math.max(0, Math.min(canvas.width - claw.width, pos.x - claw.width / 2));
     }
