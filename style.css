@@ -24,6 +24,8 @@ body {
 #game-canvas {
     border: 5px solid #88aaff;
     background-color: #e0e8ff;
+    max-width: 100%;
+    height: auto;
 }
 
 #controls {
@@ -44,30 +46,67 @@ body {
 
 #collection-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     gap: 10px;
     margin: 20px 0;
-    padding: 20px;
+    padding: 15px;
     border: 2px solid #ccc;
     background-color: #fff;
-    width: 80%;
-    max-width: 700px;
+    width: 500px;
+    max-width: calc(100vw - 40px);
+    justify-content: center;
+    align-content: start;
+    box-sizing: border-box;
 }
 
 .collection-item {
     border: 1px solid #ddd;
-    padding: 5px;
+    padding: 8px;
     background-color: #fafafa;
     text-align: center;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    box-sizing: border-box;
 }
 
 .collection-item img {
-    width: 80px;
-    height: 80px;
-    object-fit: contain; /* 이미지가 비율에 맞게 조정되도록 */
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    margin-bottom: 6px;
 }
 
 .collection-item p {
-    margin: 5px 0 0;
-    font-size: 12px;
+    margin: 0;
+    font-size: 10px;
+    font-weight: bold;
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 600px) {
+    #collection-container {
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 8px;
+        padding: 10px;
+    }
+    
+    .collection-item {
+        min-height: 100px;
+        padding: 6px;
+    }
+    
+    .collection-item img {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .collection-item p {
+        font-size: 9px;
+    }
 }
