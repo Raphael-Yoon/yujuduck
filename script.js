@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const leftButton = document.getElementById('left-button');
     const rightButton = document.getElementById('right-button');
     const dropButton = document.getElementById('drop-button');
+    
 
     // 게임 설정
     const prizeChuteX = 50;
@@ -102,6 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 게임 초기화
     function init() {
+        // 모바일 기기인 경우 집게 속도 조절
+        if (isMobileDevice()) {
+            claw.speed = 5; // 모바일에서는 더 빠르게 (예시 값)
+        } else {
+            claw.speed = 3; // 데스크톱 기본 속도
+        }
+
         createDolls();
         updateCollectionDisplay();
         addEventListeners();
@@ -196,6 +204,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // 모바일 기기 감지 함수
+    function isMobileDevice() {
+        return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('Mobi') !== -1);
+    }
+
     // 인형 생성 및 배치
     function createDolls() {
         dolls = [];
@@ -277,6 +290,14 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState = 'READY'; // 상태를 READY로 되돌림
         begConfirmationButtons.style.display = 'none'; // 예/아니오 버튼 숨기기
     }
+
+    
+
+    
+
+    
+
+    
 
     // 게임 루프
     function gameLoop() {
