@@ -28,6 +28,17 @@ body {
     box-sizing: border-box; /* 패딩과 테두리를 너비에 포함 */
 }
 
+#coin-display {
+    font-size: 24px;
+    font-weight: bold;
+    color: #4CAF50; /* Green color */
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    background-color: #e8f5e9; /* Light green background */
+    border-radius: 5px;
+    display: inline-block; /* To make padding and background work well */
+}
+
 #game-canvas {
     border: 5px solid #88aaff;
     background-color: #e0e8ff;
@@ -106,9 +117,13 @@ body {
 
 #result-display {
     margin-top: 10px;
-    font-size: 16px;
+    font-size: 18px; /* Slightly larger font */
     font-weight: bold;
-    min-height: 20px;
+    min-height: 25px; /* Ensure it has height even when empty */
+    color: #D32F2F; /* Red color for error/taunt messages */
+    background-color: #FFEBEE; /* Light red background */
+    padding: 8px;
+    border-radius: 5px;
 }
 
 #collection-container {

@@ -5,6 +5,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const coinDisplay = document.getElementById('coin-display');
     const resultDisplay = document.getElementById('result-display');
     const collectionContainer = document.getElementById('collection-container');
+    const begConfirmationButtons = document.getElementById('beg-confirmation-buttons'); // New
+    const leftButton = document.getElementById('left-button');
+    const rightButton = document.getElementById('right-button');
+    const dropButton = document.getElementById('drop-button');
 
     // 게임 설정
     const prizeChuteX = 50;
@@ -58,7 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const collectedDolls = new Set();
     let dolls = [];
     let images = {};
-    let gameState = 'LOADING'; // LOADING, READY, MOVING, DROPPING, RAISING, RETURNING, RELEASING_DOLL
+    let gameState = 'LOADING'; // LOADING, READY, MOVING, DROPPING, RAISING, RETURNING, RELEASING_DOLL, AWAITING_BEG_CONFIRMATION
+    let hasBeggedForMoney = false; // 엄마에게 돈을 조르는 기회는 1회만
 
     const claw = {
         x: canvas.width / 2,
@@ -100,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         createDolls();
         updateCollectionDisplay();
         addEventListeners();
+        coinDisplay.textContent = `${coins}원`; // 초기 코인 표시
         gameState = 'READY';
         gameLoop();
     }
@@ -122,6 +128,10 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             moveClawRight();
         });
+
+        // 엄마에게 돈 조르기 버튼 이벤트
+        document.getElementById('confirm-beg-button').addEventListener('click', confirmBegForMoney);
+        document.getElementById('decline-beg-button').addEventListener('click', declineBegForMoney);
 
         // 마우스 이벤트
         canvas.addEventListener('mousedown', handleDragStart);
@@ -221,16 +231,51 @@ document.addEventListener('DOMContentLoaded', () => {
     function startPlay() {
         console.log('startPlay called - gameState:', gameState);
         if (coins < 100) {
-            resultDisplay.textContent = '코인이 부족합니다!';
+            if (!hasBeggedForMoney) {
+                gameState = 'AWAITING_BEG_CONFIRMATION';
+                resultDisplay.textContent = '코인이 부족합니다! 엄마에게 돈을 조를까요? (예/아니오)';
+                // TODO: 사용자에게 예/아니오 버튼을 표시하고 이벤트 리스너를 연결해야 합니다.
+                // 게임 루프는 이 상태에서 일시 중지됩니다.
+            } else {
+                resultDisplay.textContent = '코인이 부족합니다!';
+            }
             return;
         }
         coins -= 100;
-        coinDisplay.textContent = coins;
+        coinDisplay.textContent = `${coins}원`;
         resultDisplay.textContent = '';
         gameState = 'DROPPING';
         claw.isClosed = false;
         claw.grabbedDoll = null;
         console.log('startPlay - gameState set to DROPPING');
+    }
+
+    // 엄마에게 돈 조르기 확인 함수
+    function confirmBegForMoney() {
+        if (gameState !== 'AWAITING_BEG_CONFIRMATION') return;
+
+        hasBeggedForMoney = true; // 기회 사용
+
+        if (Math.random() < 0.6) { // 60% 확률로 돈을 줌
+            const moneyGiven = (Math.floor(Math.random() * 10) + 1) * 100; // 100원에서 1000원 사이 (100원 단위)
+            coins += moneyGiven;
+            coinDisplay.textContent = `${coins}원`;
+            resultDisplay.textContent = `엄마가 돈을 주셨어요! +${moneyGiven}원!`;
+        } else {
+            resultDisplay.textContent = '엄마가 돈을 안 주셨어요...';
+        }
+        gameState = 'READY'; // 상태를 READY로 되돌림
+        begConfirmationButtons.style.display = 'none'; // 예/아니오 버튼 숨기기
+    }
+
+    // 엄마에게 돈 조르기 거절 함수
+    function declineBegForMoney() {
+        if (gameState !== 'AWAITING_BEG_CONFIRMATION') return;
+
+        hasBeggedForMoney = true; // 기회 사용 (거절했어도 기회는 소진)
+        resultDisplay.textContent = '코인이 부족합니다!';
+        gameState = 'READY'; // 상태를 READY로 되돌림
+        begConfirmationButtons.style.display = 'none'; // 예/아니오 버튼 숨기기
     }
 
     // 게임 루프
@@ -242,6 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 상태 업데이트
     function update() {
+        console.log('UPDATE - Current gameState:', gameState); // Debug log
+        updateUIForGameState(); // UI 가시성 업데이트
+
         // 떨어지는 인형 처리
         dolls.forEach(doll => {
             if (doll.isFalling) {
@@ -255,18 +303,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (gameState === 'DROPPING') {
+            console.log('DEBUG: Entering DROPPING state. claw.y:', claw.y); // Debug log
             claw.y += claw.speed;
-            if (claw.y >= canvas.height - claw.height - 50) { // 바닥 근처에 도달
-                // 충돌 감지
-                for (const doll of dolls) {
-                    if (!doll.isGrabbed && checkCollision(claw, doll)) {
-                        // 잡기 확률
-                        if (Math.random() < 0.5) { // 50% 확률
-                            claw.grabbedDoll = doll;
-                            doll.isGrabbed = true;
-                            break;
-                        }
-                    }
+
+            let hitDoll = null;
+            for (const doll of dolls) {
+                if (!doll.isGrabbed && checkCollision(claw, doll)) {
+                    hitDoll = doll;
+                    console.log('DEBUG: Collision detected with doll:', doll.name); // Debug log
+                    break;
+                }
+            }
+
+            console.log('DEBUG: hitDoll is:', hitDoll ? hitDoll.name : 'null', 'claw.y:', claw.y, 'bottom threshold:', canvas.height - claw.height); // Debug log
+
+            if (hitDoll) {
+                // 잡기 확률
+                if (Math.random() < 0.5) { // 50% 확률
+                    claw.grabbedDoll = hitDoll;
+                    hitDoll.isGrabbed = true;
+                    console.log('DEBUG: Doll grabbed successfully.'); // Debug log
+                } else {
+                    console.log('DEBUG: Failed to grab doll (50% chance). Displaying taunt.'); // Debug log
+                    resultDisplay.textContent = tauntMessages[Math.floor(Math.random() * tauntMessages.length)]; // Taunt here
                 }
                 claw.isClosed = true;
                 gameState = 'RAISING';
@@ -275,14 +334,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (claw.grabbedDoll && Math.random() < 0.25) {
                     claw.isShaking = true;
                     resultDisplay.textContent = '집게가 심하게 흔들립니다!';
+                    console.log('DEBUG: Claw shaking activated.'); // Debug log
                 }
+            } else if (claw.y >= canvas.height - claw.height) { // 바닥에 도달했지만 인형을 잡지 못함
+                console.log('DEBUG: Claw hit bottom empty-handed. Displaying taunt.'); // Debug log
+                claw.isClosed = true; // 집게 닫기 (빈손)
+                gameState = 'RAISING';
+                resultDisplay.textContent = tauntMessages[Math.floor(Math.random() * tauntMessages.length)];
             }
         } else if (gameState === 'RAISING') {
+            console.log('DEBUG: Entering RAISING state.'); // Debug log
             claw.y -= claw.speed;
             if (claw.grabbedDoll) {
                 // 흔들릴 때 놓칠 확률 증가 (2.5%), 평소에는 (0.7%)
                 const dropChance = claw.isShaking ? 0.025 : 0.007;
                 if (Math.random() < dropChance) {
+                    console.log('DEBUG: Doll dropped while raising. Displaying taunt.'); // Debug log
                     resultDisplay.textContent = tauntMessages[Math.floor(Math.random() * tauntMessages.length)];
                     claw.grabbedDoll.isGrabbed = false;
                     claw.grabbedDoll.isFalling = true;
@@ -298,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 gameState = 'RETURNING';
             }
         } else if (gameState === 'RETURNING') {
+            console.log('DEBUG: Entering RETURNING state.'); // Debug log
             const targetX = prizeChuteX + prizeChuteWidth / 2 - claw.width / 2;
             // 수평 이동
             if (claw.x > targetX) {
@@ -315,6 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         else if (gameState === 'RELEASING_DOLL') {
+            console.log('DEBUG: Entering RELEASING_DOLL state.'); // Debug log
             if (claw.grabbedDoll) {
                 // 인형이 떨어지는 효과
                 claw.grabbedDoll.y += claw.speed * 2;
@@ -327,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             break;
                         case 'coin':
                             coins += 500;
-                            coinDisplay.textContent = coins;
+                            coinDisplay.textContent = `${coins}원`;
                             resultDisplay.textContent = `코인 인형! +500 코인!`;
                             if (!collectedDolls.has(claw.grabbedDoll.id)) {
                                 collectedDolls.add(claw.grabbedDoll.id);
@@ -352,7 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 // 잡은 인형이 없으면 바로 리셋
-                resultDisplay.textContent = tauntMessages[Math.floor(Math.random() * tauntMessages.length)];
                 resetClaw();
             }
         }
@@ -366,6 +434,22 @@ document.addEventListener('DOMContentLoaded', () => {
         claw.grabbedDoll = null;
         claw.isShaking = false; // 흔들림 상태 초기화
         gameState = 'READY';
+    }
+
+    // UI 요소 가시성 업데이트
+    function updateUIForGameState() {
+        // 엄마에게 돈 조르기 버튼 가시성
+        if (gameState === 'AWAITING_BEG_CONFIRMATION') {
+            begConfirmationButtons.style.display = 'block';
+        } else {
+            begConfirmationButtons.style.display = 'none';
+        }
+
+        // 게임 플레이 버튼 활성화/비활성화
+        const enableButtons = (gameState === 'READY');
+        leftButton.disabled = !enableButtons;
+        rightButton.disabled = !enableButtons;
+        dropButton.disabled = !enableButtons;
     }
 
     // 그리기
