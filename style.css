@@ -41,37 +41,17 @@ body {
     margin-top: 10px;
 }
 
-.instructions {
-    font-size: 14px;
-    color: #555;
-}
-
-#drop-button {
-    margin-top: 10px;
-    padding: 10px 30px;
-    font-size: 18px;
-    font-weight: bold;
-    color: white;
-    background-color: #ff4757;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-#drop-button:hover {
-    background-color: #e04050;
-}
-
 #button-container {
     display: flex;
-    align-items: center;
+    align-items: center; /* 세로 중앙 정렬 */
     justify-content: center;
     gap: 10px;
     margin-top: 10px;
 }
 
 .arrow-button {
-    padding: 10px 15px;
+    padding: 0; /* 패딩 초기화 */
+    margin: 0; /* 마진 초기화 */
     font-size: 20px;
     font-weight: bold;
     color: white;
@@ -81,6 +61,12 @@ body {
     cursor: pointer;
     user-select: none;
     touch-action: manipulation;
+    height: 40px; /* 명시적 높이 설정 */
+    line-height: 40px; /* 높이와 동일하게 설정하여 텍스트 수직 중앙 정렬 */
+    width: 40px; /* 화살표 버튼의 너비도 고정하여 일관성 유지 */
+    display: inline-flex; /* flex 컨테이너 내에서 정렬 개선 */
+    align-items: center; /* 내부 콘텐츠 세로 중앙 정렬 */
+    justify-content: center; /* 내부 콘텐츠 가로 중앙 정렬 */
 }
 
 .arrow-button:hover {
@@ -90,6 +76,32 @@ body {
 .arrow-button:active {
     background-color: #1565C0;
     transform: scale(0.95);
+}
+
+#drop-button {
+    padding: 0 20px; /* 좌우 패딩 추가 */
+    margin: 0; /* 마진 초기화 */
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    background-color: #2196F3; /* 화살표 버튼 기본 색상 */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    height: 40px; /* 화살표 버튼과 높이 맞춤 */
+    line-height: 40px; /* 높이와 동일하게 설정하여 텍스트 수직 중앙 정렬 */
+    display: inline-flex; /* flex 컨테이너 내에서 정렬 개선 */
+    align-items: center; /* 내부 콘텐츠 세로 중앙 정렬 */
+    justify-content: center; /* 내부 콘텐츠 가로 중앙 정렬 */
+}
+
+#drop-button:hover {
+    background-color: #1976D2;
+}
+
+.instructions {
+    font-size: 14px;
+    color: #555;
 }
 
 #result-display {

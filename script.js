@@ -110,15 +110,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('drop-button').addEventListener('click', startPlay);
         
         // 화살표 버튼 이벤트
-        document.getElementById('left-arrow').addEventListener('click', moveClawLeft);
-        document.getElementById('right-arrow').addEventListener('click', moveClawRight);
+        document.getElementById('left-button').addEventListener('click', moveClawLeft);
+        document.getElementById('right-button').addEventListener('click', moveClawRight);
         
         // 터치 이벤트도 추가
-        document.getElementById('left-arrow').addEventListener('touchstart', function(e) {
+        document.getElementById('left-button').addEventListener('touchstart', function(e) {
             e.preventDefault();
             moveClawLeft();
         });
-        document.getElementById('right-arrow').addEventListener('touchstart', function(e) {
+        document.getElementById('right-button').addEventListener('touchstart', function(e) {
             e.preventDefault();
             moveClawRight();
         });
@@ -205,6 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 키보드 입력 처리
     function handleKeyDown(e) {
+        console.log('handleKeyDown - gameState:', gameState, 'key:', e.key);
         if (gameState !== 'READY') return;
 
         if (e.key === 'ArrowLeft') {
@@ -218,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startPlay() {
+        console.log('startPlay called - gameState:', gameState);
         if (coins < 100) {
             resultDisplay.textContent = '코인이 부족합니다!';
             return;
@@ -228,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState = 'DROPPING';
         claw.isClosed = false;
         claw.grabbedDoll = null;
+        console.log('startPlay - gameState set to DROPPING');
     }
 
     // 게임 루프
@@ -310,7 +313,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (claw.grabbedDoll) {
                 claw.grabbedDoll.x = claw.x;
             }
-        } else if (gameState === 'RELEASING_DOLL') {
+        }
+        else if (gameState === 'RELEASING_DOLL') {
             if (claw.grabbedDoll) {
                 // 인형이 떨어지는 효과
                 claw.grabbedDoll.y += claw.speed * 2;
@@ -395,25 +399,37 @@ document.addEventListener('DOMContentLoaded', () => {
             drawX += (Math.random() - 0.5) * 10; // 좌우로 5px 범위 내에서 흔들림
         }
 
-        ctx.fillStyle = '#555';
-        // 집게 라인
+        // 집게 라인 (상단)
+        ctx.fillStyle = '#777'; // Darker grey for the line
         ctx.fillRect(drawX + claw.width / 2 - 2, 0, 4, claw.y);
-        // 집게 본체
+
+        // 집게 본체 (중앙)
+        ctx.fillStyle = '#999'; // Lighter grey for the body
         ctx.fillRect(drawX, claw.y, claw.width, claw.height);
-        // 집게 팔
-        ctx.beginPath();
-        ctx.moveTo(drawX, claw.y + claw.height);
-        if (claw.isClosed) {
-            ctx.lineTo(drawX + claw.width / 2, claw.y + claw.height + 20);
-            ctx.lineTo(drawX + claw.width, claw.y + claw.height);
-        } else {
-            ctx.lineTo(drawX - 10, claw.y + claw.height + 20);
-            ctx.moveTo(drawX + claw.width, claw.y + claw.height);
-            ctx.lineTo(drawX + claw.width + 10, claw.y + claw.height + 20);
-        }
-        ctx.strokeStyle = '#555';
+
+        // 집게 팔 (아래)
+        ctx.strokeStyle = '#777'; // Darker grey for the arms outline
         ctx.lineWidth = 5;
+        ctx.lineCap = 'round'; // Rounded ends for the lines
+
+        ctx.beginPath();
+        if (claw.isClosed) {
+            // 닫힌 집게: 뾰족하게 모이는 형태
+            ctx.moveTo(drawX + claw.width / 2 - 15, claw.y + claw.height);
+            ctx.lineTo(drawX + claw.width / 2, claw.y + claw.height + 25); // 중앙으로 모임
+            ctx.lineTo(drawX + claw.width / 2 + 15, claw.y + claw.height);
+        } else {
+            // 열린 집게: 벌어진 형태
+            ctx.moveTo(drawX, claw.y + claw.height);
+            ctx.lineTo(drawX - 15, claw.y + claw.height + 30); // 왼쪽 팔
+            ctx.moveTo(drawX + claw.width, claw.y + claw.height);
+            ctx.lineTo(drawX + claw.width + 15, claw.y + claw.height + 30); // 오른쪽 팔
+        }
         ctx.stroke();
+
+        // 집게 손잡이 (선택 사항: 본체 위에 작은 사각형 추가)
+        ctx.fillStyle = '#666';
+        ctx.fillRect(drawX + claw.width / 4, claw.y - 5, claw.width / 2, 10);
     }
 
     function checkCollision(rect1, rect2) {

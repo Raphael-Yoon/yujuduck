@@ -3,28 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catching Duck</title>
+    <title>Yuju Duck</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-            <div id="main-container">
+    <div id="main-container">
+        <img src="images/title.png" alt="Catching Duck" id="title-image">
         <div id="game-wrapper">
-            <img src="images/title.png" alt="Catching Duck" id="title-image">
-        <canvas id="game-canvas" width="500" height="400"></canvas>
-        <div id="controls">
-            <p>코인: <span id="coin-display">1000</span></p>
-            <p class="instructions">← →: 집게 이동 | Space: 뽑기</p>
-            <div id="button-container">
-                <button id="left-arrow" class="arrow-button">◀</button>
-                <button id="drop-button">DROP</button>
-                <button id="right-arrow" class="arrow-button">▶</button>
+            <canvas id="game-canvas" width="500" height="400"></canvas>
+            <div id="coin-display"></div>
+            <div id="controls">
+                <div id="button-container">
+                    <button class="arrow-button" id="left-button">←</button>
+                    <button id="drop-button">내려가기</button>
+                    <button class="arrow-button" id="right-button">→</button>
+                </div>
             </div>
+            <div id="result-display"></div>
         </div>
-        <div id="result-display"></div>
-    </div>
 
-    <h2>나의 컬렉션</h2>
-    <div id="collection-container"></div>
+        <h2>나의 컬렉션</h2>
+        <div id="collection-container"></div>
     </div>
 
     <script src="script.js"></script>
