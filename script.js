@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM fully loaded and parsed');
     // DOM 요소 및 캔버스 설정
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
@@ -12,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
 
     // 게임 설정
-    const prizeChuteX = 50;
+    const prizeChuteX = -80;
     const prizeChuteWidth = 80;
 
     const tauntMessages = [
@@ -63,14 +64,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const collectedDolls = new Set();
     let dolls = [];
     let images = {};
-    let gameState = 'LOADING'; // LOADING, READY, MOVING, DROPPING, RAISING, RETURNING, RELEASING_DOLL, AWAITING_BEG_CONFIRMATION
+    let clawOpenImg, clawClosedImg, prizeImg;
+    let gameState = 'LOADING'; // LOADING, READY, MOVING, DROPPING, RAISING, RETURNING, RELEASING_DOLL, AWAITING_BEG_CONFIRMATION, COUNTDOWN
     let hasBeggedForMoney = false; // 엄마에게 돈을 조르는 기회는 1회만
 
     const claw = {
         x: canvas.width / 2,
         y: 50,
-        width: 50,
-        height: 35,
+        width: 60,
+        height: 60,
         speed: 3,
         isClosed: false,
         grabbedDoll: null,
@@ -80,7 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 이미지 로딩
     function loadImages(callback) {
         let loadedCount = 0;
-        const totalCount = dollData.length;
+        const totalCount = dollData.length + 3; // +2 for claw images, +1 for prize chute
+
+        // Load doll images
         dollData.forEach(data => {
             const img = new Image();
             img.src = data.src;
@@ -99,6 +103,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+
+        // Load claw images
+        clawOpenImg = new Image();
+        clawOpenImg.src = 'images/catch_o.png';
+        clawOpenImg.onload = () => {
+            loadedCount++;
+            if (loadedCount === totalCount) callback();
+        }
+        clawOpenImg.onerror = () => {
+            loadedCount++;
+            console.error(`Could not load image: images/catch_o.png`);
+            if (loadedCount === totalCount) callback();
+        }
+
+        clawClosedImg = new Image();
+        clawClosedImg.src = 'images/catch_c.png';
+        clawClosedImg.onload = () => {
+            loadedCount++;
+            if (loadedCount === totalCount) callback();
+        }
+        clawClosedImg.onerror = () => {
+            loadedCount++;
+            console.error(`Could not load image: images/catch_c.png`);
+            if (loadedCount === totalCount) callback();
+        }
+
+        prizeImg = new Image();
+        prizeImg.src = 'images/prize.png';
+        prizeImg.onload = () => {
+            loadedCount++;
+            if (loadedCount === totalCount) callback();
+        }
+        prizeImg.onerror = () => {
+            loadedCount++;
+            console.error(`Could not load image: images/prize.png`);
+            if (loadedCount === totalCount) callback();
+        }
     }
 
     // 게임 초기화
@@ -212,17 +253,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // 인형 생성 및 배치
     function createDolls() {
         dolls = [];
+        const prizeChuteRect = { x: prizeChuteX, y: canvas.height - 200, width: 300, height: 200 };
         for (let i = 0; i < 15; i++) {
             const data = dollData[Math.floor(Math.random() * dollData.length)];
-            dolls.push({
-                x: Math.random() * (canvas.width - 150) + 100, // 바닥에 무작위로
-                y: canvas.height - (Math.random() * 100 + 40),
-                width: 60,
-                height: 60,
-                isGrabbed: false,
-                isFalling: false,
-                ...data
-            });
+            let newDoll;
+            do {
+                newDoll = {
+                    x: Math.random() * (canvas.width - 150) + 100, // 바닥에 무작위로
+                    y: canvas.height - (Math.random() * 100 + 40),
+                    width: 60,
+                    height: 60,
+                    isGrabbed: false,
+                    isFalling: false,
+                    ...data
+                };
+            } while (checkCollision(newDoll, prizeChuteRect));
+            dolls.push(newDoll);
         }
     }
 
@@ -268,17 +314,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState !== 'AWAITING_BEG_CONFIRMATION') return;
 
         hasBeggedForMoney = true; // 기회 사용
-
-        if (Math.random() < 0.6) { // 60% 확률로 돈을 줌
-            const moneyGiven = (Math.floor(Math.random() * 10) + 1) * 100; // 100원에서 1000원 사이 (100원 단위)
-            coins += moneyGiven;
-            coinDisplay.textContent = `${coins}원`;
-            resultDisplay.textContent = `엄마가 돈을 주셨어요! +${moneyGiven}원!`;
-        } else {
-            resultDisplay.textContent = '엄마가 돈을 안 주셨어요...';
-        }
-        gameState = 'READY'; // 상태를 READY로 되돌림
+        gameState = 'COUNTDOWN';
         begConfirmationButtons.style.display = 'none'; // 예/아니오 버튼 숨기기
+
+        let count = 3;
+        resultDisplay.textContent = count;
+
+        const countdownInterval = setInterval(() => {
+            count--;
+            if (count > 0) {
+                resultDisplay.textContent = count;
+            } else {
+                clearInterval(countdownInterval);
+                if (Math.random() < 0.6) { // 60% 확률로 돈을 줌
+                    const moneyGiven = (Math.floor(Math.random() * 10) + 1) * 100; // 100원에서 1000원 사이 (100원 단위)
+                    coins += moneyGiven;
+                    coinDisplay.textContent = `${coins}원`;
+                    resultDisplay.textContent = `엄마가 돈을 주셨어요! +${moneyGiven}원!`;
+                } else {
+                    resultDisplay.textContent = '엄마가 돈을 안 주셨어요...';
+                }
+                setTimeout(() => {
+                    gameState = 'READY'; // 상태를 READY로 되돌림
+                }, 1000); // Show message for 1 second
+            }
+        }, 1000);
     }
 
     // 엄마에게 돈 조르기 거절 함수
@@ -378,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     claw.isShaking = false; // 흔들림 멈춤
                 } else {
                     claw.grabbedDoll.x = claw.x;
-                    claw.grabbedDoll.y = claw.y + claw.height;
+                    claw.grabbedDoll.y = claw.y + claw.height - 20; // Adjust overlap
                 }
             }
             if (claw.y <= 50) {
@@ -387,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else if (gameState === 'RETURNING') {
             console.log('DEBUG: Entering RETURNING state.'); // Debug log
-            const targetX = prizeChuteX + prizeChuteWidth / 2 - claw.width / 2;
+            const targetX = 50;
             // 수평 이동
             if (claw.x > targetX) {
                 claw.x = Math.max(targetX, claw.x - claw.speed);
@@ -477,12 +537,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 상품 배출구
-        ctx.fillStyle = '#a0a0a0';
-        ctx.fillRect(prizeChuteX, canvas.height - 50, prizeChuteWidth, 50);
-        ctx.fillStyle = '#c0c0c0';
-        ctx.fillRect(prizeChuteX, canvas.height - 50, prizeChuteWidth, 10);
-
         // 인형 그리기
         dolls.forEach(doll => {
             const img = images[doll.src];
@@ -494,6 +548,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // 상품 배출구
+        if (prizeImg && prizeImg.complete) {
+            ctx.drawImage(prizeImg, prizeChuteX, canvas.height - 200, 300, 200);
+        } else {
+            ctx.fillStyle = '#a0a0a0';
+            ctx.fillRect(prizeChuteX, canvas.height - 50, prizeChuteWidth, 50);
+            ctx.fillStyle = '#c0c0c0';
+            ctx.fillRect(prizeChuteX, canvas.height - 50, prizeChuteWidth, 10);
+        }
+
         // 집게 그리기
         drawClaw();
     }
@@ -504,37 +568,22 @@ document.addEventListener('DOMContentLoaded', () => {
             drawX += (Math.random() - 0.5) * 10; // 좌우로 5px 범위 내에서 흔들림
         }
 
-        // 집게 라인 (상단)
-        ctx.fillStyle = '#777'; // Darker grey for the line
-        ctx.fillRect(drawX + claw.width / 2 - 2, 0, 4, claw.y);
-
-        // 집게 본체 (중앙)
-        ctx.fillStyle = '#999'; // Lighter grey for the body
-        ctx.fillRect(drawX, claw.y, claw.width, claw.height);
-
-        // 집게 팔 (아래)
-        ctx.strokeStyle = '#777'; // Darker grey for the arms outline
-        ctx.lineWidth = 5;
-        ctx.lineCap = 'round'; // Rounded ends for the lines
-
+        // Draw the line
         ctx.beginPath();
-        if (claw.isClosed) {
-            // 닫힌 집게: 뾰족하게 모이는 형태
-            ctx.moveTo(drawX + claw.width / 2 - 15, claw.y + claw.height);
-            ctx.lineTo(drawX + claw.width / 2, claw.y + claw.height + 25); // 중앙으로 모임
-            ctx.lineTo(drawX + claw.width / 2 + 15, claw.y + claw.height);
-        } else {
-            // 열린 집게: 벌어진 형태
-            ctx.moveTo(drawX, claw.y + claw.height);
-            ctx.lineTo(drawX - 15, claw.y + claw.height + 30); // 왼쪽 팔
-            ctx.moveTo(drawX + claw.width, claw.y + claw.height);
-            ctx.lineTo(drawX + claw.width + 15, claw.y + claw.height + 30); // 오른쪽 팔
-        }
+        ctx.moveTo(drawX + claw.width / 2, 0);
+        ctx.lineTo(drawX + claw.width / 2, claw.y);
+        ctx.strokeStyle = '#777';
+        ctx.lineWidth = 2;
         ctx.stroke();
 
-        // 집게 손잡이 (선택 사항: 본체 위에 작은 사각형 추가)
-        ctx.fillStyle = '#666';
-        ctx.fillRect(drawX + claw.width / 4, claw.y - 5, claw.width / 2, 10);
+        const img = claw.isClosed ? clawClosedImg : clawOpenImg;
+        if (img && img.complete) {
+            ctx.drawImage(img, drawX, claw.y, claw.width, claw.height);
+        } else {
+            // Fallback drawing if image is not loaded
+            ctx.fillStyle = '#999';
+            ctx.fillRect(drawX, claw.y, claw.width, claw.height);
+        }
     }
 
     function checkCollision(rect1, rect2) {
