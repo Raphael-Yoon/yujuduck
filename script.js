@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function init() {
         // 모바일 기기인 경우 집게 속도 조절
         if (isMobileDevice()) {
-            claw.speed = 5; // 모바일에서는 더 빠르게 (예시 값)
+            claw.speed = 3.5; // 모바일에서는 더 빠르게 (예시 값)
         } else {
             claw.speed = 3; // 데스크톱 기본 속도
         }
