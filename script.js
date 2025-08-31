@@ -642,8 +642,8 @@ document.addEventListener('DOMContentLoaded', () => {
         playerNameInput.focus();
     }
 
-    // 점수 제출 (Netlify Forms 사용)
-    async function submitScore() {
+    // 점수 제출 (로컬만 사용)
+    function submitScore() {
         const playerName = playerNameInput.value.trim();
         if (!playerName) {
             alert('이름을 입력하세요!');
@@ -656,66 +656,40 @@ document.addEventListener('DOMContentLoaded', () => {
         submitScoreBtn.textContent = '등록 중...';
 
         try {
-            const formData = new FormData();
-            formData.append('form-name', 'yujuduck-scores');
-            formData.append('name', playerName);
-            formData.append('dollCount', collectedDolls.size.toString());
-            formData.append('timestamp', Date.now().toString());
-
-            const response = await fetch('/', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (response.ok) {
-                // 로컬 스토리지에도 저장 (백업용)
-                const scoreData = {
-                    name: playerName,
-                    dollCount: collectedDolls.size,
-                    timestamp: Date.now()
-                };
-
-                let localRankings = JSON.parse(localStorage.getItem('yujuduck-rankings') || '[]');
-                localRankings.push(scoreData);
-                localRankings.sort((a, b) => {
-                    if (b.dollCount !== a.dollCount) {
-                        return b.dollCount - a.dollCount;
-                    }
-                    return a.timestamp - b.timestamp;
-                });
-                localRankings = localRankings.slice(0, 50);
-                localStorage.setItem('yujuduck-rankings', JSON.stringify(localRankings));
-
-                gameOverModal.style.display = 'none';
-                alert('랭킹에 등록되었습니다!\n\n점수는 Netlify 관리자 패널에서 확인할 수 있습니다.');
-                showRankings();
-            } else {
-                throw new Error('등록에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('Score submission error:', error);
-            alert('네트워크 오류로 랭킹 등록에 실패했습니다.\n로컬에만 저장됩니다.');
-            
-            // 로컬에라도 저장
+            // 점수 데이터 생성
             const scoreData = {
                 name: playerName,
                 dollCount: collectedDolls.size,
                 timestamp: Date.now()
             };
 
+            // 로컬 스토리지에서 기존 랭킹 가져오기
             let localRankings = JSON.parse(localStorage.getItem('yujuduck-rankings') || '[]');
+            
+            // 새 점수 추가
             localRankings.push(scoreData);
+            
+            // 인형 개수 기준으로 내림차순 정렬, 같으면 빠른 시간순
             localRankings.sort((a, b) => {
                 if (b.dollCount !== a.dollCount) {
                     return b.dollCount - a.dollCount;
                 }
                 return a.timestamp - b.timestamp;
             });
+            
+            // 상위 50개만 유지
             localRankings = localRankings.slice(0, 50);
+            
+            // 로컬 스토리지에 저장
             localStorage.setItem('yujuduck-rankings', JSON.stringify(localRankings));
             
             gameOverModal.style.display = 'none';
+            alert('랭킹에 등록되었습니다!');
             showRankings();
+            
+        } catch (error) {
+            console.error('Score submission error:', error);
+            alert('점수 저장에 실패했습니다.');
         } finally {
             // 버튼 복원
             submitScoreBtn.disabled = false;
@@ -735,7 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
         rankingsList.innerHTML = '';
         
         if (rankings.length === 0) {
-            rankingsList.innerHTML = '<p>아직 랭킹이 없습니다.<br><small>점수 제출 시 Netlify Forms로 전송되어<br>관리자가 확인할 수 있습니다.</small></p>';
+            rankingsList.innerHTML = '<p>아직 랭킹이 없습니다.<br><small>게임을 완료하고 점수를 등록해보세요!</small></p>';
             return;
         }
         
