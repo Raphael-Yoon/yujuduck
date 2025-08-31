@@ -29,6 +29,37 @@
 
         <h2>나의 컬렉션</h2>
         <div id="collection-container"></div>
+        
+        <button id="show-rankings-btn">랭킹 보기</button>
+        
+        <!-- Netlify Forms (숨김) -->
+        <form name="yujuduck-scores" netlify style="display: none;">
+            <input type="text" name="name" />
+            <input type="number" name="dollCount" />
+            <input type="text" name="timestamp" />
+        </form>
+        
+        <!-- 게임 오버 모달 -->
+        <div id="game-over-modal" style="display: none;">
+            <div id="game-over-content">
+                <h3>게임 종료!</h3>
+                <p id="final-score">수집한 인형: <span id="collected-count">0</span>개</p>
+                <input type="text" id="player-name-input" placeholder="이름을 입력하세요" maxlength="10">
+                <div>
+                    <button id="submit-score-btn">랭킹 등록</button>
+                    <button id="restart-game-btn">다시 시작</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 랭킹 모달 -->
+        <div id="rankings-modal" style="display: none;">
+            <div id="rankings-content">
+                <h3>랭킹</h3>
+                <div id="rankings-list"></div>
+                <button id="close-rankings-btn">닫기</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

@@ -10,6 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const leftButton = document.getElementById('left-button');
     const rightButton = document.getElementById('right-button');
     const dropButton = document.getElementById('drop-button');
+    const showRankingsBtn = document.getElementById('show-rankings-btn');
+    const gameOverModal = document.getElementById('game-over-modal');
+    const rankingsModal = document.getElementById('rankings-modal');
+    const collectedCountSpan = document.getElementById('collected-count');
+    const playerNameInput = document.getElementById('player-name-input');
+    const submitScoreBtn = document.getElementById('submit-score-btn');
+    const restartGameBtn = document.getElementById('restart-game-btn');
+    const closeRankingsBtn = document.getElementById('close-rankings-btn');
+    const rankingsList = document.getElementById('rankings-list');
     
 
     // 게임 설정
@@ -67,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let clawOpenImg, clawClosedImg, prizeImg;
     let gameState = 'LOADING'; // LOADING, READY, MOVING, DROPPING, RAISING, RETURNING, RELEASING_DOLL, AWAITING_BEG_CONFIRMATION, COUNTDOWN
     let hasBeggedForMoney = false; // 엄마에게 돈을 조르는 기회는 1회만
+    
 
     const claw = {
         x: canvas.width / 2,
@@ -181,6 +191,22 @@ document.addEventListener('DOMContentLoaded', () => {
         // 엄마에게 돈 조르기 버튼 이벤트
         document.getElementById('confirm-beg-button').addEventListener('click', confirmBegForMoney);
         document.getElementById('decline-beg-button').addEventListener('click', declineBegForMoney);
+        
+        // 랭킹 관련 이벤트
+        showRankingsBtn.addEventListener('click', showRankings);
+        submitScoreBtn.addEventListener('click', submitScore);
+        restartGameBtn.addEventListener('click', restartGame);
+        closeRankingsBtn.addEventListener('click', () => {
+            rankingsModal.style.display = 'none';
+        });
+        
+        // 엔터키로 점수 제출
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitScore();
+            }
+        });
+        
 
         // 마우스 이벤트
         canvas.addEventListener('mousedown', handleDragStart);
@@ -296,7 +322,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // TODO: 사용자에게 예/아니오 버튼을 표시하고 이벤트 리스너를 연결해야 합니다.
                 // 게임 루프는 이 상태에서 일시 중지됩니다.
             } else {
-                resultDisplay.textContent = '코인이 부족합니다!';
+                // 게임 종료 - 이름 입력받기
+                showGameOver();
             }
             return;
         }
@@ -473,7 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     switch (claw.grabbedDoll.type) {
                         case 'bomb':
                             resultDisplay.textContent = '펑! 폭탄이었습니다...';
-                            // TODO: 폭발 애니메이션 추가 가능
                             break;
                         case 'coin':
                             coins += 500;
@@ -487,6 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         default: // normal
                             const messageTemplate = celebrationMessages[Math.floor(Math.random() * celebrationMessages.length)];
                             resultDisplay.textContent = messageTemplate.replace('${dollName}', claw.grabbedDoll.name);
+                            
                             if (!collectedDolls.has(claw.grabbedDoll.id)) {
                                 collectedDolls.add(claw.grabbedDoll.id);
                                 updateCollectionDisplay();
@@ -497,6 +524,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 잡힌 인형은 화면에서 제거
                     dolls = dolls.filter(d => d !== claw.grabbedDoll);
                     claw.grabbedDoll = null;
+                    
+                    // 게임 종료 조건 확인 (코인 부족하고 엄마에게 조를 기회도 없음)
+                    if (coins < 100 && hasBeggedForMoney) {
+                        showGameOver();
+                        return;
+                    }
+                    
+                    // 임시: 테스트용 게임 종료 (수집한 인형이 5개 이상일 때)
+                    // if (collectedDolls.size >= 5) {
+                    //     showGameOver();
+                    //     return;
+                    // }
+                    
                     // 상태 리셋
                     resetClaw();
                 }
@@ -592,6 +632,139 @@ document.addEventListener('DOMContentLoaded', () => {
                rect1.y < rect2.y + rect2.height &&
                rect1.y + rect1.height > rect2.y;
     }
+
+    // 게임 오버 표시
+    function showGameOver() {
+        gameState = 'GAME_OVER';
+        collectedCountSpan.textContent = collectedDolls.size;
+        playerNameInput.value = '';
+        gameOverModal.style.display = 'block';
+        playerNameInput.focus();
+    }
+
+    // 점수 제출 (Netlify Forms 사용)
+    async function submitScore() {
+        const playerName = playerNameInput.value.trim();
+        if (!playerName) {
+            alert('이름을 입력하세요!');
+            playerNameInput.focus();
+            return;
+        }
+
+        // 버튼 비활성화
+        submitScoreBtn.disabled = true;
+        submitScoreBtn.textContent = '등록 중...';
+
+        try {
+            const formData = new FormData();
+            formData.append('form-name', 'yujuduck-scores');
+            formData.append('name', playerName);
+            formData.append('dollCount', collectedDolls.size.toString());
+            formData.append('timestamp', Date.now().toString());
+
+            const response = await fetch('/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                // 로컬 스토리지에도 저장 (백업용)
+                const scoreData = {
+                    name: playerName,
+                    dollCount: collectedDolls.size,
+                    timestamp: Date.now()
+                };
+
+                let localRankings = JSON.parse(localStorage.getItem('yujuduck-rankings') || '[]');
+                localRankings.push(scoreData);
+                localRankings.sort((a, b) => {
+                    if (b.dollCount !== a.dollCount) {
+                        return b.dollCount - a.dollCount;
+                    }
+                    return a.timestamp - b.timestamp;
+                });
+                localRankings = localRankings.slice(0, 50);
+                localStorage.setItem('yujuduck-rankings', JSON.stringify(localRankings));
+
+                gameOverModal.style.display = 'none';
+                alert('랭킹에 등록되었습니다!\n\n점수는 Netlify 관리자 패널에서 확인할 수 있습니다.');
+                showRankings();
+            } else {
+                throw new Error('등록에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Score submission error:', error);
+            alert('네트워크 오류로 랭킹 등록에 실패했습니다.\n로컬에만 저장됩니다.');
+            
+            // 로컬에라도 저장
+            const scoreData = {
+                name: playerName,
+                dollCount: collectedDolls.size,
+                timestamp: Date.now()
+            };
+
+            let localRankings = JSON.parse(localStorage.getItem('yujuduck-rankings') || '[]');
+            localRankings.push(scoreData);
+            localRankings.sort((a, b) => {
+                if (b.dollCount !== a.dollCount) {
+                    return b.dollCount - a.dollCount;
+                }
+                return a.timestamp - b.timestamp;
+            });
+            localRankings = localRankings.slice(0, 50);
+            localStorage.setItem('yujuduck-rankings', JSON.stringify(localRankings));
+            
+            gameOverModal.style.display = 'none';
+            showRankings();
+        } finally {
+            // 버튼 복원
+            submitScoreBtn.disabled = false;
+            submitScoreBtn.textContent = '랭킹 등록';
+        }
+    }
+
+    // 랭킹 표시 (로컬 데이터 사용)
+    function showRankings() {
+        const localRankings = JSON.parse(localStorage.getItem('yujuduck-rankings') || '[]');
+        displayRankings(localRankings);
+        rankingsModal.style.display = 'block';
+    }
+
+    // 랭킹 목록 표시
+    function displayRankings(rankings) {
+        rankingsList.innerHTML = '';
+        
+        if (rankings.length === 0) {
+            rankingsList.innerHTML = '<p>아직 랭킹이 없습니다.<br><small>점수 제출 시 Netlify Forms로 전송되어<br>관리자가 확인할 수 있습니다.</small></p>';
+            return;
+        }
+        
+        rankings.forEach((ranking, index) => {
+            const item = document.createElement('div');
+            item.classList.add('ranking-item');
+            item.innerHTML = `
+                <div class="rank">${index + 1}위</div>
+                <div class="name">${ranking.name}</div>
+                <div class="score">인형 ${ranking.dollCount}개</div>
+                <div class="date">${new Date(ranking.timestamp).toLocaleDateString()}</div>
+            `;
+            rankingsList.appendChild(item);
+        });
+    }
+
+    // 게임 재시작
+    function restartGame() {
+        coins = 1000;
+        hasBeggedForMoney = false;
+        collectedDolls.clear();
+        coinDisplay.textContent = `${coins}원`;
+        resultDisplay.textContent = '';
+        gameOverModal.style.display = 'none';
+        createDolls();
+        updateCollectionDisplay();
+        resetClaw();
+    }
+
 
     // 컬렉션 표시 업데이트
     function updateCollectionDisplay() {
