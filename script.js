@@ -1,9 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM fully loaded and parsed');
     
-    // 온라인 랭킹 설정 (Netlify Functions 사용)
-    const SUBMIT_RANKING_API = '/.netlify/functions/submit-ranking';
-    const GET_RANKINGS_API = '/.netlify/functions/get-rankings';
     // DOM 요소 및 캔버스 설정
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
@@ -14,15 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const leftButton = document.getElementById('left-button');
     const rightButton = document.getElementById('right-button');
     const dropButton = document.getElementById('drop-button');
-    const showRankingsBtn = document.getElementById('show-rankings-btn');
     const gameOverModal = document.getElementById('game-over-modal');
-    const rankingsModal = document.getElementById('rankings-modal');
     const collectedCountSpan = document.getElementById('collected-count');
-    const playerNameInput = document.getElementById('player-name-input');
-    const submitScoreBtn = document.getElementById('submit-score-btn');
     const restartGameBtn = document.getElementById('restart-game-btn');
-    const closeRankingsBtn = document.getElementById('close-rankings-btn');
-    const rankingsList = document.getElementById('rankings-list');
     
 
     // 게임 설정
@@ -171,7 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
         coinDisplay.textContent = `${coins}원`; // 초기 코인 표시
         gameState = 'READY';
         gameLoop();
-        showRankings(5); // 페이지 로드 시 상위 5개 랭킹 표시
     }
 
     // 이벤트 리스너 추가
@@ -197,21 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('confirm-beg-button').addEventListener('click', confirmBegForMoney);
         document.getElementById('decline-beg-button').addEventListener('click', declineBegForMoney);
         
-        // 랭킹 관련 이벤트
-        showRankingsBtn.addEventListener('click', () => showRankings(null, true));
-        submitScoreBtn.addEventListener('click', submitScore);
         restartGameBtn.addEventListener('click', restartGame);
-        closeRankingsBtn.addEventListener('click', () => {
-            rankingsModal.style.display = 'none';
-        });
-        
-        // 엔터키로 점수 제출
-        playerNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                submitScore();
-            }
-        });
-        
 
         // 마우스 이벤트
         canvas.addEventListener('mousedown', handleDragStart);
@@ -382,14 +358,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState = 'READY'; // 상태를 READY로 되돌림
         begConfirmationButtons.style.display = 'none'; // 예/아니오 버튼 숨기기
     }
-
-    
-
-    
-
-    
-
-    
 
     // 게임 루프
     function gameLoop() {
@@ -642,134 +610,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function showGameOver() {
         gameState = 'GAME_OVER';
         collectedCountSpan.textContent = collectedDolls.size;
-        playerNameInput.value = '';
         gameOverModal.style.display = 'block';
-        playerNameInput.focus();
-        dropButton.textContent = '등록하기'; // 버튼 텍스트 변경
         dropButton.disabled = true; // 버튼 비활성화
-    }
-
-    // 점수 제출 (온라인 + 로컬 백업)
-    async function submitScore() {
-        const playerName = playerNameInput.value.trim();
-        if (!playerName) {
-            alert('이름을 입력하세요!');
-            playerNameInput.focus();
-            return;
-        }
-
-        // 버튼 비활성화
-        submitScoreBtn.disabled = true;
-        submitScoreBtn.textContent = '등록 중...';
-
-        try {
-            // 점수 데이터 생성
-            const scoreData = {
-                name: playerName,
-                dollCount: collectedDolls.size,
-                timestamp: Date.now(),
-                date: new Date().toISOString().split('T')[0]
-            };
-
-            // 온라인에 제출 시도
-            try {
-                await fetch(SUBMIT_RANKING_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(scoreData)
-                });
-                console.log('Online ranking submission successful');
-            } catch (onlineError) {
-                console.error('Online submission failed:', onlineError);
-                alert('온라인 랭킹 등록에 실패했습니다. 네트워크 연결을 확인해주세요.');
-                // 실패 시 로컬 저장소에 백업하는 로직을 추가할 수 있지만, 여기서는 생략
-            }
-            
-            gameOverModal.style.display = 'none';
-            alert('랭킹에 등록되었습니다!');
-            showRankings();
-            
-        } catch (error) {
-            console.error('Score submission error:', error);
-            alert('점수 저장에 실패했습니다.');
-        } finally {
-            // 버튼 복원
-            submitScoreBtn.disabled = false;
-            submitScoreBtn.textContent = '랭킹 등록';
-        }
-    }
-
-    
-
-    // 랭킹 표시 (온라인 데이터 사용)
-    async function showRankings(limit = null, showModal = false) {
-        try {
-            const response = await fetch(GET_RANKINGS_API);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const onlineRankings = await response.json();
-            displayRankings(onlineRankings, limit);
-        } catch (error) {
-            console.error('Error fetching online rankings:', error);
-            // 모달이 아닌 경우에만 메시지를 표시 (예: 초기 로드 시)
-            if (!showModal) {
-                document.getElementById('top-rankings-list').innerHTML = '<p>랭킹을 불러오는데 실패했습니다.</p>';
-            } else {
-                rankingsList.innerHTML = '<p>랭킹을 불러오는데 실패했습니다. 네트워크 연결을 확인해주세요.</p>';
-            }
-        }
-        if (showModal) {
-            rankingsModal.style.display = 'block';
-        }
-    }
-
-    // 랭킹 목록 표시
-    function displayRankings(rankings, limit = null) {
-        // 모달 랭킹 리스트 초기화
-        rankingsList.innerHTML = '';
-        // 상위 랭킹 리스트 초기화 (새로 추가될 요소)
-        const topRankingsList = document.getElementById('top-rankings-list');
-        if (topRankingsList) {
-            topRankingsList.innerHTML = '';
-        }
-
-        if (rankings.length === 0) {
-            const noRankingsMessage = '<p>아직 랭킹이 없습니다.<br><small>게임을 완료하고 점수를 등록해보세요!</small></p>';
-            rankingsList.innerHTML = noRankingsMessage;
-            if (topRankingsList) {
-                topRankingsList.innerHTML = noRankingsMessage;
-            }
-            return;
-        }
-        
-        // 모달 랭킹 표시 (전체 랭킹)
-        rankings.forEach((ranking, index) => {
-            const item = document.createElement('div');
-            item.classList.add('ranking-item');
-            item.innerHTML = `
-                <div class="rank">${index + 1}위</div>
-                <div class="name">${ranking.name}</div>
-                <div class="score">인형 ${ranking.dollCount}개</div>
-                <div class="date">${new Date(ranking.timestamp).toLocaleDateString()}</div>
-            `;
-            rankingsList.appendChild(item);
-        });
-
-        // 상위 N개 랭킹 표시 (지정된 limit가 있을 경우)
-        if (limit && topRankingsList) {
-            const limitedRankings = rankings.slice(0, limit);
-            limitedRankings.forEach((ranking, index) => {
-                const item = document.createElement('div');
-                item.classList.add('ranking-item', 'top-ranking-item'); // 새로운 클래스 추가
-                item.innerHTML = `
-                    <div class="rank">${index + 1}위</div>
-                    <div class="name">${ranking.name}</div>
-                    <div class="score">${ranking.dollCount}개</div>
-                `;
-                topRankingsList.appendChild(item);
-            });
-        }
     }
 
     // 게임 재시작
@@ -783,7 +625,6 @@ document.addEventListener('DOMContentLoaded', () => {
         createDolls();
         updateCollectionDisplay();
         resetClaw();
-        dropButton.textContent = '내려가기'; // 버튼 텍스트 원래대로
         dropButton.disabled = false; // 버튼 활성화
     }
 
