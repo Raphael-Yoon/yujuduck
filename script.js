@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM fully loaded and parsed');
+    
+    // 온라인 랭킹 설정 (Netlify Functions 사용)
+    const SUBMIT_RANKING_API = '/.netlify/functions/submit-ranking';
+    const GET_RANKINGS_API = '/.netlify/functions/get-rankings';
     // DOM 요소 및 캔버스 설정
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
@@ -642,8 +646,8 @@ document.addEventListener('DOMContentLoaded', () => {
         playerNameInput.focus();
     }
 
-    // 점수 제출 (로컬만 사용)
-    function submitScore() {
+    // 점수 제출 (온라인 + 로컬 백업)
+    async function submitScore() {
         const playerName = playerNameInput.value.trim();
         if (!playerName) {
             alert('이름을 입력하세요!');
@@ -660,28 +664,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const scoreData = {
                 name: playerName,
                 dollCount: collectedDolls.size,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                date: new Date().toISOString().split('T')[0]
             };
 
-            // 로컬 스토리지에서 기존 랭킹 가져오기
-            let localRankings = JSON.parse(localStorage.getItem('yujuduck-rankings') || '[]');
-            
-            // 새 점수 추가
-            localRankings.push(scoreData);
-            
-            // 인형 개수 기준으로 내림차순 정렬, 같으면 빠른 시간순
-            localRankings.sort((a, b) => {
-                if (b.dollCount !== a.dollCount) {
-                    return b.dollCount - a.dollCount;
-                }
-                return a.timestamp - b.timestamp;
-            });
-            
-            // 상위 50개만 유지
-            localRankings = localRankings.slice(0, 50);
-            
-            // 로컬 스토리지에 저장
-            localStorage.setItem('yujuduck-rankings', JSON.stringify(localRankings));
+            // 온라인에 제출 시도
+            try {
+                await fetch(SUBMIT_RANKING_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(scoreData)
+                });
+                console.log('Online ranking submission successful');
+            } catch (onlineError) {
+                console.error('Online submission failed:', onlineError);
+                alert('온라인 랭킹 등록에 실패했습니다. 네트워크 연결을 확인해주세요.');
+                // 실패 시 로컬 저장소에 백업하는 로직을 추가할 수 있지만, 여기서는 생략
+            }
             
             gameOverModal.style.display = 'none';
             alert('랭킹에 등록되었습니다!');
@@ -697,10 +696,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 랭킹 표시 (로컬 데이터 사용)
-    function showRankings() {
-        const localRankings = JSON.parse(localStorage.getItem('yujuduck-rankings') || '[]');
-        displayRankings(localRankings);
+    
+
+    // 랭킹 표시 (온라인 데이터 사용)
+    async function showRankings() {
+        try {
+            const response = await fetch(GET_RANKINGS_API);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const onlineRankings = await response.json();
+            displayRankings(onlineRankings);
+        } catch (error) {
+            console.error('Error fetching online rankings:', error);
+            rankingsList.innerHTML = '<p>랭킹을 불러오는데 실패했습니다. 네트워크 연결을 확인해주세요.</p>';
+        }
         rankingsModal.style.display = 'block';
     }
 
