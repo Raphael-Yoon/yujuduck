@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         coinDisplay.textContent = `${coins}원`; // 초기 코인 표시
         gameState = 'READY';
         gameLoop();
+        showRankings(5); // 페이지 로드 시 상위 5개 랭킹 표시
     }
 
     // 이벤트 리스너 추가
@@ -197,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('decline-beg-button').addEventListener('click', declineBegForMoney);
         
         // 랭킹 관련 이벤트
-        showRankingsBtn.addEventListener('click', showRankings);
+        showRankingsBtn.addEventListener('click', () => showRankings(null, true));
         submitScoreBtn.addEventListener('click', submitScore);
         restartGameBtn.addEventListener('click', restartGame);
         closeRankingsBtn.addEventListener('click', () => {
@@ -644,6 +645,8 @@ document.addEventListener('DOMContentLoaded', () => {
         playerNameInput.value = '';
         gameOverModal.style.display = 'block';
         playerNameInput.focus();
+        dropButton.textContent = '등록하기'; // 버튼 텍스트 변경
+        dropButton.disabled = true; // 버튼 비활성화
     }
 
     // 점수 제출 (온라인 + 로컬 백업)
@@ -699,30 +702,48 @@ document.addEventListener('DOMContentLoaded', () => {
     
 
     // 랭킹 표시 (온라인 데이터 사용)
-    async function showRankings() {
+    async function showRankings(limit = null, showModal = false) {
         try {
             const response = await fetch(GET_RANKINGS_API);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const onlineRankings = await response.json();
-            displayRankings(onlineRankings);
+            displayRankings(onlineRankings, limit);
         } catch (error) {
             console.error('Error fetching online rankings:', error);
-            rankingsList.innerHTML = '<p>랭킹을 불러오는데 실패했습니다. 네트워크 연결을 확인해주세요.</p>';
+            // 모달이 아닌 경우에만 메시지를 표시 (예: 초기 로드 시)
+            if (!showModal) {
+                document.getElementById('top-rankings-list').innerHTML = '<p>랭킹을 불러오는데 실패했습니다.</p>';
+            } else {
+                rankingsList.innerHTML = '<p>랭킹을 불러오는데 실패했습니다. 네트워크 연결을 확인해주세요.</p>';
+            }
         }
-        rankingsModal.style.display = 'block';
+        if (showModal) {
+            rankingsModal.style.display = 'block';
+        }
     }
 
     // 랭킹 목록 표시
-    function displayRankings(rankings) {
+    function displayRankings(rankings, limit = null) {
+        // 모달 랭킹 리스트 초기화
         rankingsList.innerHTML = '';
-        
+        // 상위 랭킹 리스트 초기화 (새로 추가될 요소)
+        const topRankingsList = document.getElementById('top-rankings-list');
+        if (topRankingsList) {
+            topRankingsList.innerHTML = '';
+        }
+
         if (rankings.length === 0) {
-            rankingsList.innerHTML = '<p>아직 랭킹이 없습니다.<br><small>게임을 완료하고 점수를 등록해보세요!</small></p>';
+            const noRankingsMessage = '<p>아직 랭킹이 없습니다.<br><small>게임을 완료하고 점수를 등록해보세요!</small></p>';
+            rankingsList.innerHTML = noRankingsMessage;
+            if (topRankingsList) {
+                topRankingsList.innerHTML = noRankingsMessage;
+            }
             return;
         }
         
+        // 모달 랭킹 표시 (전체 랭킹)
         rankings.forEach((ranking, index) => {
             const item = document.createElement('div');
             item.classList.add('ranking-item');
@@ -734,6 +755,21 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             rankingsList.appendChild(item);
         });
+
+        // 상위 N개 랭킹 표시 (지정된 limit가 있을 경우)
+        if (limit && topRankingsList) {
+            const limitedRankings = rankings.slice(0, limit);
+            limitedRankings.forEach((ranking, index) => {
+                const item = document.createElement('div');
+                item.classList.add('ranking-item', 'top-ranking-item'); // 새로운 클래스 추가
+                item.innerHTML = `
+                    <div class="rank">${index + 1}위</div>
+                    <div class="name">${ranking.name}</div>
+                    <div class="score">${ranking.dollCount}개</div>
+                `;
+                topRankingsList.appendChild(item);
+            });
+        }
     }
 
     // 게임 재시작
@@ -747,6 +783,8 @@ document.addEventListener('DOMContentLoaded', () => {
         createDolls();
         updateCollectionDisplay();
         resetClaw();
+        dropButton.textContent = '내려가기'; // 버튼 텍스트 원래대로
+        dropButton.disabled = false; // 버튼 활성화
     }
 
 
