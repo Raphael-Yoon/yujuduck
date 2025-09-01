@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM fully loaded and parsed');
+    
     // DOM 요소 및 캔버스 설정
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
@@ -10,6 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const leftButton = document.getElementById('left-button');
     const rightButton = document.getElementById('right-button');
     const dropButton = document.getElementById('drop-button');
+    const gameOverModal = document.getElementById('game-over-modal');
+    const collectedCountSpan = document.getElementById('collected-count');
+    const restartGameBtn = document.getElementById('restart-game-btn');
     
 
     // 게임 설정
@@ -67,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let backgroundImg, clawOpenImg, clawClosedImg, prizeImg;
     let gameState = 'LOADING'; // LOADING, READY, MOVING, DROPPING, RAISING, RETURNING, RELEASING_DOLL, AWAITING_BEG_CONFIRMATION, COUNTDOWN
     let hasBeggedForMoney = false; // 엄마에게 돈을 조르는 기회는 1회만
+    
 
     const claw = {
         x: canvas.width / 2,
@@ -177,6 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 엄마에게 돈 조르기 버튼 이벤트
         document.getElementById('confirm-beg-button').addEventListener('click', confirmBegForMoney);
         document.getElementById('decline-beg-button').addEventListener('click', declineBegForMoney);
+        
+        restartGameBtn.addEventListener('click', restartGame);
 
         // 마우스 이벤트
         canvas.addEventListener('mousedown', handleDragStart);
@@ -291,6 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 gameState = 'AWAITING_BEG_CONFIRMATION';
                 resultDisplay.textContent = '코인이 부족합니다! 엄마에게 돈을 조를까요? (예/아니오)';
             } else {
+<<<<<<< HEAD
                 // 게임 오버 조건
                 gameState = 'GAME_OVER';
                 const playerName = prompt('게임이 끝났어요! 이름을 입력하세요:', '플레이어');
@@ -301,6 +309,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 // 게임 재시작 또는 다른 로직 추가 가능 (예: location.reload())
                 document.getElementById('drop-button').disabled = true;
+=======
+                // 게임 종료 - 이름 입력받기
+                showGameOver();
+>>>>>>> 7be7c5cec22858076aee98f79d1c1de8698d0f00
             }
             return;
         }
@@ -354,14 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState = 'READY'; // 상태를 READY로 되돌림
         begConfirmationButtons.style.display = 'none'; // 예/아니오 버튼 숨기기
     }
-
-    
-
-    
-
-    
-
-    
 
     // 게임 루프
     function gameLoop() {
@@ -477,7 +481,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     switch (claw.grabbedDoll.type) {
                         case 'bomb':
                             resultDisplay.textContent = '펑! 폭탄이었습니다...';
-                            // TODO: 폭발 애니메이션 추가 가능
                             break;
                         case 'coin':
                             coins += 500;
@@ -491,6 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         default: // normal
                             const messageTemplate = celebrationMessages[Math.floor(Math.random() * celebrationMessages.length)];
                             resultDisplay.textContent = messageTemplate.replace('${dollName}', claw.grabbedDoll.name);
+                            
                             if (!collectedDolls.has(claw.grabbedDoll.id)) {
                                 collectedDolls.add(claw.grabbedDoll.id);
                                 updateCollectionDisplay();
@@ -501,6 +505,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 잡힌 인형은 화면에서 제거
                     dolls = dolls.filter(d => d !== claw.grabbedDoll);
                     claw.grabbedDoll = null;
+                    
+                    // 게임 종료 조건 확인 (코인 부족하고 엄마에게 조를 기회도 없음)
+                    if (coins < 100 && hasBeggedForMoney) {
+                        showGameOver();
+                        return;
+                    }
+                    
+                    // 임시: 테스트용 게임 종료 (수집한 인형이 5개 이상일 때)
+                    // if (collectedDolls.size >= 5) {
+                    //     showGameOver();
+                    //     return;
+                    // }
+                    
                     // 상태 리셋
                     resetClaw();
                 }
@@ -601,6 +618,29 @@ document.addEventListener('DOMContentLoaded', () => {
                rect1.y < rect2.y + rect2.height &&
                rect1.y + rect1.height > rect2.y;
     }
+
+    // 게임 오버 표시
+    function showGameOver() {
+        gameState = 'GAME_OVER';
+        collectedCountSpan.textContent = collectedDolls.size;
+        gameOverModal.style.display = 'block';
+        dropButton.disabled = true; // 버튼 비활성화
+    }
+
+    // 게임 재시작
+    function restartGame() {
+        coins = 1000;
+        hasBeggedForMoney = false;
+        collectedDolls.clear();
+        coinDisplay.textContent = `${coins}원`;
+        resultDisplay.textContent = '';
+        gameOverModal.style.display = 'none';
+        createDolls();
+        updateCollectionDisplay();
+        resetClaw();
+        dropButton.disabled = false; // 버튼 활성화
+    }
+
 
     // 컬렉션 표시 업데이트
     function updateCollectionDisplay() {
