@@ -298,8 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 gameState = 'AWAITING_BEG_CONFIRMATION';
                 resultDisplay.textContent = '코인이 부족합니다! 엄마에게 돈을 조를까요? (예/아니오)';
             } else {
-<<<<<<< HEAD
-                // 게임 오버 조건
+                // 게임 오버 조건 - 이름 입력받기
                 gameState = 'GAME_OVER';
                 const playerName = prompt('게임이 끝났어요! 이름을 입력하세요:', '플레이어');
                 if (playerName && playerName.trim() !== '') {
@@ -309,10 +308,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 // 게임 재시작 또는 다른 로직 추가 가능 (예: location.reload())
                 document.getElementById('drop-button').disabled = true;
-=======
-                // 게임 종료 - 이름 입력받기
-                showGameOver();
->>>>>>> 7be7c5cec22858076aee98f79d1c1de8698d0f00
             }
             return;
         }
