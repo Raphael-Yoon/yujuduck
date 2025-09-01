@@ -41,7 +41,6 @@ body {
 
 #game-canvas {
     border: 5px solid #88aaff;
-    background-color: #e0e8ff;
     width: 100%; /* 컨테이너 너비에 맞춤 */
     height: auto;
     max-width: 100%;
@@ -191,4 +190,30 @@ body {
     .collection-item p {
         font-size: 9px;
     }
+}
+
+#ranking-container {
+    margin: 20px auto;
+    padding: 15px;
+    border: 2px solid #ccc;
+    background-color: #fff;
+    width: 100%;
+    max-width: calc(100vw - 40px);
+    box-sizing: border-box;
+}
+
+#ranking-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#ranking-table th, #ranking-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+#ranking-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
 }

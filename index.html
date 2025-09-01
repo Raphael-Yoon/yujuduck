@@ -6,6 +6,10 @@
     <title>Yuju Duck</title>
     <link rel="stylesheet" href="style.css">
     <link rel="apple-touch-icon" href="images/apple_touch_icon.png">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
 </head>
 <body>
     <div id="main-container">
@@ -29,6 +33,21 @@
 
         <h2>나의 컬렉션</h2>
         <div id="collection-container"></div>
+
+        <h2 id="ranking-title">랭킹</h2>
+        <div id="ranking-container">
+            <table id="ranking-table">
+                <thead>
+                    <tr>
+                        <th>순위</th>
+                        <th>이름</th>
+                        <th>점수</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script src="script.js"></script>

@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const collectedDolls = new Set();
     let dolls = [];
     let images = {};
-    let clawOpenImg, clawClosedImg, prizeImg;
+    let backgroundImg, clawOpenImg, clawClosedImg, prizeImg;
     let gameState = 'LOADING'; // LOADING, READY, MOVING, DROPPING, RAISING, RETURNING, RELEASING_DOLL, AWAITING_BEG_CONFIRMATION, COUNTDOWN
     let hasBeggedForMoney = false; // 엄마에게 돈을 조르는 기회는 1회만
 
@@ -82,7 +82,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // 이미지 로딩
     function loadImages(callback) {
         let loadedCount = 0;
-        const totalCount = dollData.length + 3; // +2 for claw images, +1 for prize chute
+        const totalCount = dollData.length + 4; // +2 for claw images, +1 for prize chute, +1 for background
+
+        // Load background image
+        backgroundImg = new Image();
+        backgroundImg.src = 'images/background.png';
+        backgroundImg.onload = () => {
+            loadedCount++;
+            if (loadedCount === totalCount) callback();
+        }
+        backgroundImg.onerror = () => {
+            loadedCount++;
+            console.error(`Could not load image: images/background.png`);
+            if (loadedCount === totalCount) callback();
+        }
 
         // Load doll images
         dollData.forEach(data => {
@@ -140,23 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(`Could not load image: images/prize.png`);
             if (loadedCount === totalCount) callback();
         }
-    }
-
-    // 게임 초기화
-    function init() {
-        // 모바일 기기인 경우 집게 속도 조절
-        if (isMobileDevice()) {
-            claw.speed = 3.5; // 모바일에서는 더 빠르게 (예시 값)
-        } else {
-            claw.speed = 3; // 데스크톱 기본 속도
-        }
-
-        createDolls();
-        updateCollectionDisplay();
-        addEventListeners();
-        coinDisplay.textContent = `${coins}원`; // 초기 코인 표시
-        gameState = 'READY';
-        gameLoop();
     }
 
     // 이벤트 리스너 추가
@@ -288,25 +284,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startPlay() {
-        console.log('startPlay called - gameState:', gameState);
+        if (gameState !== 'READY') return;
+
         if (coins < 100) {
             if (!hasBeggedForMoney) {
                 gameState = 'AWAITING_BEG_CONFIRMATION';
                 resultDisplay.textContent = '코인이 부족합니다! 엄마에게 돈을 조를까요? (예/아니오)';
-                // TODO: 사용자에게 예/아니오 버튼을 표시하고 이벤트 리스너를 연결해야 합니다.
-                // 게임 루프는 이 상태에서 일시 중지됩니다.
             } else {
-                resultDisplay.textContent = '코인이 부족합니다!';
+                // 게임 오버 조건
+                gameState = 'GAME_OVER';
+                const playerName = prompt('게임이 끝났어요! 이름을 입력하세요:', '플레이어');
+                if (playerName && playerName.trim() !== '') {
+                    saveScore(playerName.trim(), collectedDolls.size);
+                } else {
+                    alert('이름을 입력하지 않아 랭킹에 등록되지 않았습니다.');
+                }
+                // 게임 재시작 또는 다른 로직 추가 가능 (예: location.reload())
+                document.getElementById('drop-button').disabled = true;
             }
             return;
         }
+
         coins -= 100;
         coinDisplay.textContent = `${coins}원`;
         resultDisplay.textContent = '';
         gameState = 'DROPPING';
         claw.isClosed = false;
         claw.grabbedDoll = null;
-        console.log('startPlay - gameState set to DROPPING');
     }
 
     // 엄마에게 돈 조르기 확인 함수
@@ -400,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (hitDoll) {
                 // 잡기 확률
-                if (Math.random() < 0.5) { // 50% 확률
+                if (Math.random() < 0.7) { // 70% 확률
                     claw.grabbedDoll = hitDoll;
                     hitDoll.isGrabbed = true;
                     console.log('DEBUG: Doll grabbed successfully.'); // Debug log
@@ -537,6 +541,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Draw background image
+        if (backgroundImg && backgroundImg.complete) {
+            ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+        }
+
         // 인형 그리기
         dolls.forEach(doll => {
             const img = images[doll.src];
@@ -624,4 +633,103 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 게임 시작
     loadImages(init);
+
+    // Firebase 설정
+    const firebaseConfig = {
+        apiKey: "AIzaSyAwO92zAoXW3ujNoNfy4tOMzN8wZwwYQgg",
+        authDomain: "yujuduck.firebaseapp.com",
+        databaseURL: "https://yujuduck-default-rtdb.asia-southeast1.firebasedatabase.app/",
+        projectId: "yujuduck",
+        storageBucket: "yujuduck.firebasestorage.app",
+        messagingSenderId: "749402785241",
+        appId: "1:749402785241:web:dbf5ce7b4dd4d808e185c8",
+        measurementId: "G-HQMEJQM1ML"
+    };
+
+    // Firebase 초기화
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // 랭킹 관련 DOM 요소
+    const rankingTableBody = document.querySelector('#ranking-table tbody');
+    const rankingTitle = document.getElementById('ranking-title');
+
+    // 랭킹 로드 및 실시간 업데이트 함수
+    function loadRanking() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const monthKey = `${year}-${month}`;
+
+        rankingTitle.textContent = `랭킹 (${year}년 ${month}월)`;
+
+        const rankingRef = database.ref('ranking/' + monthKey);
+
+        rankingRef.orderByChild('score').limitToLast(10).on('value', (snapshot) => {
+            const ranking = [];
+            snapshot.forEach((childSnapshot) => {
+                ranking.push({
+                    name: childSnapshot.key,
+                    score: childSnapshot.val().score
+                });
+            });
+
+            // 점수 기준으로 내림차순 정렬
+            ranking.reverse();
+
+            rankingTableBody.innerHTML = ''; // 테이블 초기화
+
+            ranking.forEach((entry, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.score}</td>
+                `;
+                rankingTableBody.appendChild(row);
+            });
+        });
+    }
+
+    // 점수 저장 함수 (Firebase)
+    function saveScore(playerName, score) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const monthKey = `${year}-${month}`;
+
+        const playerRef = database.ref(`ranking/${monthKey}/${playerName}`);
+
+        playerRef.once('value', (snapshot) => {
+            if (snapshot.exists() && snapshot.val().score >= score) {
+                alert('기존 점수보다 낮은 점수입니다. 갱신되지 않았습니다.');
+            } else {
+                playerRef.set({ score: score }, (error) => {
+                    if (error) {
+                        alert('점수 저장에 실패했습니다.');
+                    } else {
+                        alert('점수가 저장되었습니다!');
+                    }
+                });
+            }
+        });
+    }
+
+    // 게임 초기화 함수
+    function init() {
+        // 모바일 기기인 경우 집게 속도 조절
+        if (isMobileDevice()) {
+            claw.speed = 3.5; // 모바일에서는 더 빠르게 (예시 값)
+        } else {
+            claw.speed = 3; // 데스크톱 기본 속도
+        }
+
+        createDolls();
+        updateCollectionDisplay();
+        addEventListeners();
+        coinDisplay.textContent = `${coins}원`; // 초기 코인 표시
+        gameState = 'READY';
+        loadRanking(); // 페이지 로드 시 랭킹 표시
+        gameLoop();
+    }
 });
