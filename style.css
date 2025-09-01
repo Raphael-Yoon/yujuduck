@@ -218,3 +218,341 @@ body {
     background-color: #f2f2f2;
     font-weight: bold;
 }
+
+/* 엄마에게 돈 조르기 버튼 스타일 */
+.beg-buttons-container {
+    background: linear-gradient(135deg, #FFE5E5, #FFF0F5);
+    border: 3px solid #FF69B4;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 10px 0;
+    box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+    animation: gentle-bounce 2s ease-in-out infinite;
+}
+
+.beg-message {
+    font-size: 18px;
+    font-weight: bold;
+    color: #FF1493;
+    text-align: center;
+    margin-bottom: 15px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.beg-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.beg-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    min-width: 80px;
+}
+
+.beg-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.beg-btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.beg-btn-yes {
+    background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+    color: white;
+    border: 2px solid #FF4757;
+}
+
+.beg-btn-yes:hover {
+    background: linear-gradient(135deg, #FF5252, #FF7979);
+}
+
+.beg-btn-no {
+    background: linear-gradient(135deg, #74B9FF, #81ECEC);
+    color: white;
+    border: 2px solid #0984e3;
+}
+
+.beg-btn-no:hover {
+    background: linear-gradient(135deg, #6C5CE7, #74B9FF);
+}
+
+.beg-btn .emoji {
+    font-size: 24px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+@keyframes gentle-bounce {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* 게임 오버 모달 스타일 */
+.game-over-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    animation: fade-in 0.3s ease-out;
+}
+
+.modal-content {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 0;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    animation: modal-appear 0.4s ease-out;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    padding: 25px 20px;
+    text-align: center;
+    border-radius: 20px 20px 0 0;
+}
+
+.game-over-emoji {
+    font-size: 48px;
+    margin-bottom: 10px;
+    animation: bounce-in 0.6s ease-out 0.2s both;
+}
+
+.game-over-title {
+    margin: 0;
+    color: #fff;
+    font-size: 28px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.modal-body {
+    padding: 30px 25px;
+    background: white;
+}
+
+.score-display {
+    text-align: center;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    border-radius: 15px;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.trophy-icon {
+    font-size: 40px;
+    margin-bottom: 8px;
+    animation: rotate-trophy 2s ease-in-out infinite;
+}
+
+.collection-text {
+    margin: 5px 0;
+    color: #8B4513;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.score-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: #FF6B35;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.name-input-section {
+    text-align: center;
+}
+
+.input-label {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.name-input {
+    width: 100%;
+    padding: 15px;
+    border: 3px solid #e0e0e0;
+    border-radius: 25px;
+    font-size: 16px;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.name-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+    transform: scale(1.02);
+}
+
+.modal-footer {
+    padding: 20px 25px 25px;
+    background: white;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.modal-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    min-width: 120px;
+    justify-content: center;
+}
+
+.modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-btn:active {
+    transform: translateY(0px);
+}
+
+.save-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.save-btn:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+.save-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.restart-btn {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    color: #333;
+}
+
+.restart-btn:hover {
+    background: linear-gradient(135deg, #ff8a8e 0%, #fdbfdf 100%);
+}
+
+.btn-icon {
+    font-size: 18px;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modal-appear {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes bounce-in {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes rotate-trophy {
+    0%, 100% {
+        transform: rotate(-5deg);
+    }
+    50% {
+        transform: rotate(5deg);
+    }
+}
+
+/* 모바일 반응형 */
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .game-over-emoji {
+        font-size: 36px;
+    }
+    
+    .game-over-title {
+        font-size: 24px;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .modal-btn {
+        width: 100%;
+    }
+}

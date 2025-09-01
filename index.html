@@ -25,9 +25,18 @@
                 </div>
             </div>
             <div id="result-display"></div>
-            <div id="beg-confirmation-buttons" style="display: none;">
-                <button id="confirm-beg-button">예</button>
-                <button id="decline-beg-button">아니오</button>
+            <div id="beg-confirmation-buttons" style="display: none;" class="beg-buttons-container">
+                <div class="beg-message">엄마에게 돈을 조를까요? 🥺</div>
+                <div class="beg-buttons">
+                    <button id="confirm-beg-button" class="beg-btn beg-btn-yes">
+                        <span class="emoji">😭</span>
+                        <span>조르기</span>
+                    </button>
+                    <button id="decline-beg-button" class="beg-btn beg-btn-no">
+                        <span class="emoji">😤</span>
+                        <span>포기</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -49,14 +58,39 @@
             </table>
         </div>
 
-        <!-- Game Over Modal -->
-        <div id="game-over-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 2px solid #333; border-radius: 10px; z-index: 1000;">
-            <h3>게임 종료!</h3>
-            <p>수집한 인형: <span id="collected-count">0</span>개</p>
-            <button id="restart-game-btn">다시 시작</button>
-        </div>
     </div>
 
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="game-over-modal" style="display: none;">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="game-over-emoji">🎮</div>
+                <h2 class="game-over-title">게임 종료!</h2>
+            </div>
+            <div class="modal-body">
+                <div class="score-display">
+                    <div class="trophy-icon">🏆</div>
+                    <p class="collection-text">수집한 인형</p>
+                    <div class="score-number"><span id="collected-count">0</span>개</div>
+                </div>
+                <div class="name-input-section">
+                    <p class="input-label">랭킹 등록을 위해 이름을 입력해주세요 ✨</p>
+                    <input type="text" id="player-name-input" class="name-input" placeholder="이름을 입력하세요" maxlength="20">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-score-btn" class="modal-btn save-btn">
+                    <span class="btn-icon">💾</span>
+                    <span>점수 저장</span>
+                </button>
+                <button id="restart-game-btn" class="modal-btn restart-btn">
+                    <span class="btn-icon">🔄</span>
+                    <span>다시 시작</span>
+                </button>
+            </div>
+        </div>
+    </div>
     
     <script src="script.js"></script>
 </body>

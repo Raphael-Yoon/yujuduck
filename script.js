@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameOverModal = document.getElementById('game-over-modal');
     const collectedCountSpan = document.getElementById('collected-count');
     const restartGameBtn = document.getElementById('restart-game-btn');
+    const playerNameInput = document.getElementById('player-name-input');
+    const saveScoreBtn = document.getElementById('save-score-btn');
     
 
     // 게임 설정
@@ -24,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '바보! 인형이 도망갔잖아!',
         '에휴, 그것도 못 잡니?',
         '다음 생에 잡으렴!',
-        '코인만 날렸네!',
+        '돈만 날렸네!',
         '엄마한테 일러바칠 거야!',
         '넌 인형 뽑기 소질 없어!',
         '다음에 또 도전해봐! (과연 잡을 수 있을까?)',
@@ -60,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 17, name: '인형 17호', rarity: 'Super Rare', src: 'images/doll_17.png', type: 'normal' },
         { id: 18, name: '인형 18호', rarity: 'Super Rare', src: 'images/doll_18.png', type: 'normal' },
         { id: 19, name: '폭탄 인형', rarity: 'Super Rare', src: 'images/doll_19.png', type: 'bomb' },
-        { id: 20, name: '코인 인형', rarity: 'Super Rare', src: 'images/doll_20.png', type: 'coin' }
+        { id: 20, name: '돈 인형', rarity: 'Super Rare', src: 'images/doll_20.png', type: 'coin' }
     ];
 
     // 게임 상태
@@ -184,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('decline-beg-button').addEventListener('click', declineBegForMoney);
         
         restartGameBtn.addEventListener('click', restartGame);
+        saveScoreBtn.addEventListener('click', handleSaveScore);
 
         // 마우스 이벤트
         canvas.addEventListener('mousedown', handleDragStart);
@@ -296,24 +299,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (coins < 100) {
             if (!hasBeggedForMoney) {
                 gameState = 'AWAITING_BEG_CONFIRMATION';
-                resultDisplay.textContent = '코인이 부족합니다! 엄마에게 돈을 조를까요? (예/아니오)';
+                resultDisplay.textContent = '돈이 부족합니다! 💰';
             } else {
-                // 게임 오버 조건 - 이름 입력받기
-                gameState = 'GAME_OVER';
-                const playerName = prompt('게임이 끝났어요! 이름을 입력하세요:', '플레이어');
-                if (playerName && playerName.trim() !== '') {
-                    saveScore(playerName.trim(), collectedDolls.size);
-                } else {
-                    alert('이름을 입력하지 않아 랭킹에 등록되지 않았습니다.');
-                }
-                // 게임 재시작 또는 다른 로직 추가 가능 (예: location.reload())
-                document.getElementById('drop-button').disabled = true;
+                // 게임 종료 - 이름 입력받기
+                showGameOver();
             }
             return;
         }
 
         coins -= 100;
         coinDisplay.textContent = `${coins}원`;
+        
+        // 돈이 부족해지면 버튼을 찬스로 변경 (첫 번째만)
+        if (coins < 100 && !hasBeggedForMoney) {
+            dropButton.textContent = '찬스!!!';
+        }
+        
         resultDisplay.textContent = '';
         gameState = 'DROPPING';
         claw.isClosed = false;
@@ -347,6 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 setTimeout(() => {
                     gameState = 'READY'; // 상태를 READY로 되돌림
+                    dropButton.textContent = '내려가기'; // 버튼 텍스트 복원
                 }, 1000); // Show message for 1 second
             }
         }, 1000);
@@ -357,9 +359,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState !== 'AWAITING_BEG_CONFIRMATION') return;
 
         hasBeggedForMoney = true; // 기회 사용 (거절했어도 기회는 소진)
-        resultDisplay.textContent = '코인이 부족합니다!';
+        resultDisplay.textContent = '돈이 부족합니다!';
         gameState = 'READY'; // 상태를 READY로 되돌림
         begConfirmationButtons.style.display = 'none'; // 예/아니오 버튼 숨기기
+        dropButton.textContent = '게임 끝'; // 돈이 없어서 게임이 끝난 상태
     }
 
     // 게임 루프
@@ -480,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         case 'coin':
                             coins += 500;
                             coinDisplay.textContent = `${coins}원`;
-                            resultDisplay.textContent = `코인 인형! +500 코인!`;
+                            resultDisplay.textContent = `돈 인형! +500원!`;
                             if (!collectedDolls.has(claw.grabbedDoll.id)) {
                                 collectedDolls.add(claw.grabbedDoll.id);
                                 updateCollectionDisplay();
@@ -501,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     dolls = dolls.filter(d => d !== claw.grabbedDoll);
                     claw.grabbedDoll = null;
                     
-                    // 게임 종료 조건 확인 (코인 부족하고 엄마에게 조를 기회도 없음)
+                    // 게임 종료 조건 확인 (돈 부족하고 엄마에게 조를 기회도 없음)
                     if (coins < 100 && hasBeggedForMoney) {
                         showGameOver();
                         return;
@@ -618,8 +621,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function showGameOver() {
         gameState = 'GAME_OVER';
         collectedCountSpan.textContent = collectedDolls.size;
+        playerNameInput.value = ''; // 입력 필드 초기화
         gameOverModal.style.display = 'block';
         dropButton.disabled = true; // 버튼 비활성화
+        dropButton.textContent = '게임 끝'; // 버튼 텍스트 변경
+        playerNameInput.focus(); // 입력 필드에 포커스
+    }
+
+    // 점수 저장 처리
+    function handleSaveScore() {
+        const playerName = playerNameInput.value.trim();
+        if (playerName === '') {
+            alert('이름을 입력해주세요!');
+            playerNameInput.focus();
+            return;
+        }
+        saveScore(playerName, collectedDolls.size);
+        saveScoreBtn.disabled = true; // 저장 후 버튼 비활성화
+        saveScoreBtn.textContent = '저장됨';
     }
 
     // 게임 재시작
@@ -630,10 +649,13 @@ document.addEventListener('DOMContentLoaded', () => {
         coinDisplay.textContent = `${coins}원`;
         resultDisplay.textContent = '';
         gameOverModal.style.display = 'none';
+        saveScoreBtn.disabled = false; // 점수 저장 버튼 활성화
+        saveScoreBtn.textContent = '점수 저장'; // 버튼 텍스트 초기화
         createDolls();
         updateCollectionDisplay();
         resetClaw();
         dropButton.disabled = false; // 버튼 활성화
+        dropButton.textContent = '내려가기'; // 버튼 텍스트 초기화
     }
 
 
@@ -762,7 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
         createDolls();
         updateCollectionDisplay();
         addEventListeners();
-        coinDisplay.textContent = `${coins}원`; // 초기 코인 표시
+        coinDisplay.textContent = `${coins}원`; // 초기 돈 표시
         gameState = 'READY';
         loadRanking(); // 페이지 로드 시 랭킹 표시
         gameLoop();
