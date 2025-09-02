@@ -713,14 +713,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 랭킹 로드 및 실시간 업데이트 함수
     function loadRanking() {
+        rankingTitle.textContent = '주간 랭킹'; // Title changed
+
         const now = new Date();
-        const year = now.getFullYear();
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const monthKey = `${year}-${month}`;
+        const dayOfWeek = now.getDay(); // 0 (Sun) - 6 (Sat)
+        const daysSinceMonday = (dayOfWeek === 0) ? 6 : dayOfWeek - 1;
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - daysSinceMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const year = startOfWeek.getFullYear();
+        const month = (startOfWeek.getMonth() + 1).toString().padStart(2, '0');
+        const date = startOfWeek.getDate().toString().padStart(2, '0');
+        const weekKey = `${year}-${month}-${date}`;
 
-        rankingTitle.textContent = `랭킹 (${year}년 ${month}월)`;
-
-        const rankingRef = database.ref('ranking/' + monthKey);
+        const rankingRef = database.ref('ranking/' + weekKey);
 
         rankingRef.orderByChild('score').limitToLast(10).on('value', (snapshot) => {
             const ranking = [];
@@ -731,10 +738,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
-            // 점수 기준으로 내림차순 정렬
-            ranking.reverse();
+            ranking.reverse(); // Sort by score descending
 
-            rankingTableBody.innerHTML = ''; // 테이블 초기화
+            rankingTableBody.innerHTML = '';
 
             ranking.forEach((entry, index) => {
                 const row = document.createElement('tr');
@@ -751,11 +757,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 점수 저장 함수 (Firebase)
     function saveScore(playerName, score) {
         const now = new Date();
-        const year = now.getFullYear();
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const monthKey = `${year}-${month}`;
+        const dayOfWeek = now.getDay(); // 0 (Sun) - 6 (Sat)
+        const daysSinceMonday = (dayOfWeek === 0) ? 6 : dayOfWeek - 1;
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - daysSinceMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
 
-        const playerRef = database.ref(`ranking/${monthKey}/${playerName}`);
+        const year = startOfWeek.getFullYear();
+        const month = (startOfWeek.getMonth() + 1).toString().padStart(2, '0');
+        const date = startOfWeek.getDate().toString().padStart(2, '0');
+        const weekKey = `${year}-${month}-${date}`;
+
+        const playerRef = database.ref(`ranking/${weekKey}/${playerName}`);
 
         playerRef.once('value', (snapshot) => {
             if (snapshot.exists() && snapshot.val().score >= score) {
